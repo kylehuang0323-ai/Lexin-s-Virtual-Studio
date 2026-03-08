@@ -5,7 +5,6 @@
 from flask import Flask, render_template, request, jsonify, session
 import config
 from agents import get_agent, get_all_agents_info
-from agents.developer import Developer
 import file_manager
 
 app = Flask(__name__)

@@ -10,9 +10,14 @@ class BaseAgent:
     """AI Agent 基类，所有角色 Agent 都继承自此类"""
 
     def __init__(self):
-        self.name = "基础Agent"
-        self.icon = "🤖"
-        self.role_description = "我是一个通用的AI助手。"
+        # 仅在子类未设置时使用默认值（子类在 super().__init__() 前赋值）
+        if not hasattr(self, 'name'):
+            self.name = "基础Agent"
+        if not hasattr(self, 'icon'):
+            self.icon = "🤖"
+        if not hasattr(self, 'role_description'):
+            self.role_description = "我是一个通用的AI助手。"
+
         self.system_prompt = self._build_system_prompt()
         self.conversation_history = []
 

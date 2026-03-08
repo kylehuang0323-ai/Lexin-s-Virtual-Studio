@@ -50,8 +50,9 @@ python app.py
 
 ```
 虚拟工作室/
-├── app.py                 # Flask 主应用
+├── app.py                 # Flask 主应用（含聊天 API 和项目管理 API）
 ├── config.py              # 配置文件
+├── file_manager.py        # 文件管理器（项目文件解析、创建、读取）
 ├── requirements.txt       # Python 依赖
 ├── .env.example           # 环境变量模板
 ├── agents/                # AI Agent 模块
@@ -61,13 +62,14 @@ python app.py
 │   ├── architect.py
 │   ├── ui_designer.py
 │   ├── ux_designer.py
-│   ├── developer.py
+│   ├── developer.py       # 代码工程师（含项目生成能力）
 │   └── tester.py
 ├── static/
 │   ├── css/style.css
 │   └── js/chat.js
-└── templates/
-    └── index.html
+├── templates/
+│   └── index.html
+└── projects/              # 生成的项目输出目录（自动创建，已 gitignore）
 ```
 
 ## 🔧 添加新 Agent
