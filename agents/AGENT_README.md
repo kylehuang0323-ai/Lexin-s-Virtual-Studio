@@ -1,17 +1,17 @@
-# 🏗️ 架构设计师 Agent
+# 📋 需求分析师 Agent
 
 ## 角色职责
-- 设计高可用、可扩展的系统架构
-- 选择合适的技术栈和框架
-- 规划微服务架构和数据库设计
-- 设计 API 接口和数据流
-- 评估技术方案的优劣势
+- 理解和提炼用户的核心需求
+- 将模糊的想法转化为清晰的需求文档
+- 识别功能性需求和非功能性需求
+- 分析需求的优先级和可行性
+- 编写用户故事（User Story）和验收标准
 
 ## 相关文件
-- `agents/architect.py` - 架构设计师 Agent 实现
+- `agents/requirement_analyst.py` - 需求分析师 Agent 实现
 - `agents/base_agent.py` - Agent 基类
 
 ## 开发说明
-修改此角色的行为，请编辑 `agents/architect.py` 中的：
+修改此角色的行为，请编辑 `agents/requirement_analyst.py` 中的：
 - `role_description` - 角色描述
 - `_build_system_prompt()` - 系统提示词
