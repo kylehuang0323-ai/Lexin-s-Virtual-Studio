@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏢 虚拟工作室</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 侧边栏 - Agent 列表 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>🏢 虚拟工作室</h1>
+                <p class="subtitle">AI 团队协作平台</p>
+            </div>
+
+            <div class="agent-section">
+                <h3>选择团队成员</h3>
+                <div id="agent-list" class="agent-list">
+                    <!-- Agent 卡片将由 JS 动态生成 -->
+                </div>
+            </div>
+
+            <div class="sidebar-actions">
+                <button id="btn-ask-all" class="btn btn-primary" title="向所有团队成员征求意见">
+                    🗣️ 全员讨论
+                </button>
+                <button id="btn-generate" class="btn btn-accent" title="让代码工程师生成完整项目">
+                    📦 生成项目
+                </button>
+                <button id="btn-projects" class="btn btn-secondary" title="查看已生成的项目">
+                    📁 项目列表
+                </button>
+                <button id="btn-clear" class="btn btn-secondary" title="清除对话历史">
+                    🗑️ 清除历史
+                </button>
+            </div>
+        </aside>
+
+        <!-- 主聊天区域 -->
+        <main class="chat-main">
+            <div class="chat-header">
+                <div id="current-agent-info" class="current-agent">
+                    <span class="agent-icon">📋</span>
+                    <span class="agent-name">需求分析师</span>
+                </div>
+                <div class="header-actions">
+                    <button id="btn-toggle-panel" class="btn-icon" title="切换文件面板" style="display:none;">
+                        📂 文件面板
+                    </button>
+                </div>
+            </div>
+
+            <div id="chat-messages" class="chat-messages">
+                <div class="welcome-message">
+                    <div class="welcome-icon">🏢</div>
+                    <h2>欢迎来到虚拟工作室！</h2>
+                    <p>这里有一支专业的 AI 团队随时为你服务。</p>
+                    <p>在下方输入你的创意或想法，选择一位团队成员对话，<br>或点击「全员讨论」让整个团队一起为你分析。</p>
+                    <p class="highlight-tip">💡 讨论完毕后点击「📦 生成项目」，代码工程师将自动创建开发文档和全部代码文件。</p>
+                    <div class="team-preview">
+                        <span>📋 需求分析</span>
+                        <span>🏗️ 架构设计</span>
+                        <span>🎨 UI设计</span>
+                        <span>🧩 UX设计</span>
+                        <span>💻 代码开发</span>
+                        <span>🧪 测试保障</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-input-area">
+                <div class="input-container">
+                    <textarea
+                        id="user-input"
+                        placeholder="描述你的创意或想法..."
+                        rows="3"
+                    ></textarea>
+                    <button id="btn-send" class="btn-send" title="发送消息">
+                        ➤
+                    </button>
+                </div>
+                <div class="input-hint">
+                    按 Enter 发送，Shift+Enter 换行
+                </div>
+            </div>
+        </main>
+
+        <!-- 右侧文件面板 -->
+        <aside id="file-panel" class="file-panel hidden">
+            <div class="file-panel-header">
+                <h3>📁 项目文件</h3>
+                <button id="btn-close-panel" class="btn-icon-small" title="关闭">✕</button>
+            </div>
+
+            <div id="file-panel-project-info" class="file-panel-project-info">
+                <span id="file-panel-project-name" class="project-name-label">未选择项目</span>
+            </div>
+
+            <div id="file-tree-container" class="file-tree-container">
+                <div class="file-tree-empty">尚未生成项目文件</div>
+            </div>
+
+            <div id="file-preview-container" class="file-preview-container hidden">
+                <div class="file-preview-header">
+                    <span id="preview-file-name" class="preview-file-name"></span>
+                    <button id="btn-close-preview" class="btn-icon-small" title="关闭预览">✕</button>
+                </div>
+                <pre id="file-preview-content" class="file-preview-content"><code></code></pre>
+            </div>
+        </aside>
+    </div>
+
+    <!-- 项目生成弹窗 -->
+    <div id="generate-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <h2>📦 生成项目</h2>
+            <p class="modal-desc">代码工程师将根据你的需求自动生成开发文档和全部代码文件</p>
+            <div class="modal-form">
+                <label>项目名称</label>
+                <input id="gen-project-name" type="text" placeholder="例如：我的电商网站" />
+                <label>需求描述</label>
+                <textarea id="gen-requirement" rows="6" placeholder="请描述你的项目需求，可以粘贴之前讨论的结果..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button id="btn-gen-cancel" class="btn btn-secondary">取消</button>
+                <button id="btn-gen-confirm" class="btn btn-accent">🚀 开始生成</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 项目列表弹窗 -->
+    <div id="projects-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <h2>📁 已生成的项目</h2>
+            <div id="projects-list" class="projects-list">
+                <p class="loading-text">加载中...</p>
+            </div>
+            <div class="modal-actions">
+                <button id="btn-projects-close" class="btn btn-secondary">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+</body>
+</html>
