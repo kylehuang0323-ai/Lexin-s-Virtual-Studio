@@ -1,3 +1,16 @@
+agent/tester
+# 🧪 测试工程师 Agent
+
+## 角色职责
+- 制定全面的测试策略和测试计划
+- 设计测试用例和测试场景
+- 识别边界条件和异常情况
+- 性能测试和安全测试方案
+- 自动化测试方案设计
+
+## 相关文件
+- `agents/tester.py` - 测试工程师 Agent 实现
+
 agent/requirement-analyst
 # 📋 需求分析师 Agent
 
@@ -43,10 +56,14 @@ agent/ui-designer
 - `agents/developer.py` - 代码工程师 Agent 实现（含 generate_project）
 main
 main
+main
 - `agents/base_agent.py` - Agent 基类
 - `file_manager.py` - 文件管理器（解析、创建、读取文件）
 
 ## 开发说明
+agent/tester
+修改此角色的行为，请编辑 `agents/tester.py` 中的：
+
 agent/requirement-analyst
 修改此角色的行为，请编辑 `agents/requirement_analyst.py` 中的：
 
@@ -54,6 +71,7 @@ agent/ui-designer
 修改此角色的行为，请编辑 `agents/ui_designer.py` 中的：
 
 修改此角色的行为，请编辑 `agents/developer.py` 中的：
+main
 main
 main
 - `role_description` - 角色描述
