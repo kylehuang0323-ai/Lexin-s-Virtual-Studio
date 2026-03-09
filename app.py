@@ -4,8 +4,9 @@
 """
 from flask import Flask, render_template, request, jsonify, session
 import config
-from agents import get_agent, get_all_agents_info
+from agents import get_agent, get_all_agents_info, get_meeting_agents_info
 import file_manager
+import discussion_manager
 
 app = Flask(__name__)
 app.secret_key = config.SECRET_KEY
@@ -32,6 +33,12 @@ def index():
 def list_agents():
     """获取所有可用的 Agent 列表"""
     return jsonify({"agents": get_all_agents_info()})
+
+
+@app.route("/api/agents/meeting", methods=["GET"])
+def list_meeting_agents():
+    """获取会议室角色信息（诡秘之主主题）"""
+    return jsonify({"agents": get_meeting_agents_info()})
 
 
 @app.route("/api/chat", methods=["POST"])
@@ -77,22 +84,31 @@ def chat_all():
 
     results = []
     agents_info = get_all_agents_info()
+    meeting_info = {a["id"]: a for a in get_meeting_agents_info()}
 
     for agent_info in agents_info:
+        agent_id = agent_info["id"]
+        m = meeting_info.get(agent_id, {})
         try:
-            agent = get_or_create_agent(session["session_id"], agent_info["id"])
+            agent = get_or_create_agent(session["session_id"], agent_id)
             reply = agent.chat(user_message)
             results.append({
-                "agent_id": agent_info["id"],
+                "agent_id": agent_id,
                 "agent_name": agent_info["name"],
                 "agent_icon": agent_info["icon"],
+                "meeting_name": m.get("meeting_name", agent_info["name"]),
+                "meeting_icon": m.get("meeting_icon", agent_info["icon"]),
+                "meeting_title": m.get("meeting_title", ""),
                 "reply": reply
             })
         except Exception as e:
             results.append({
-                "agent_id": agent_info["id"],
+                "agent_id": agent_id,
                 "agent_name": agent_info["name"],
                 "agent_icon": agent_info["icon"],
+                "meeting_name": m.get("meeting_name", agent_info["name"]),
+                "meeting_icon": m.get("meeting_icon", agent_info["icon"]),
+                "meeting_title": m.get("meeting_title", ""),
                 "reply": f"⚠️ 调用失败: {str(e)}"
             })
 
@@ -212,10 +228,90 @@ def read_project_file():
     return jsonify(result)
 
 
+# ========================================
+# 讨论记录管理 API
+# ========================================
+
+@app.route("/api/discussion/save", methods=["POST"])
+def save_discussion():
+    """保存一次会议讨论记录"""
+    data = request.get_json()
+    topic = data.get("topic", "").strip()
+    messages = data.get("messages", [])
+
+    if not topic or not messages:
+        return jsonify({"error": "缺少议题或消息"}), 400
+
+    result = discussion_manager.save_discussion(topic, messages)
+    return jsonify(result)
+
+
+@app.route("/api/discussion/list", methods=["GET"])
+def list_discussions():
+    """列出所有历史讨论"""
+    discussions = discussion_manager.list_discussions()
+    return jsonify({"discussions": discussions})
+
+
+@app.route("/api/discussion/load", methods=["GET"])
+def load_discussion():
+    """加载一条完整的讨论记录"""
+    disc_id = request.args.get("id", "")
+    if not disc_id:
+        return jsonify({"error": "缺少讨论 ID"}), 400
+
+    data = discussion_manager.load_discussion(disc_id)
+    if "error" in data:
+        return jsonify(data), 404
+    return jsonify(data)
+
+
+@app.route("/api/discussion/markdown", methods=["GET"])
+def discussion_markdown():
+    """获取讨论记录的 Markdown 内容"""
+    disc_id = request.args.get("id", "")
+    if not disc_id:
+        return jsonify({"error": "缺少讨论 ID"}), 400
+
+    result = discussion_manager.get_markdown(disc_id)
+    if "error" in result:
+        return jsonify(result), 404
+    return jsonify(result)
+
+
+@app.route("/api/discussion/summarize", methods=["POST"])
+def summarize_discussion():
+    """让阿罗德斯总结讨论"""
+    data = request.get_json()
+    disc_id = data.get("id", "")
+    topic = data.get("topic", "")
+    messages = data.get("messages", [])
+
+    if not topic or not messages:
+        return jsonify({"error": "缺少议题或消息"}), 400
+
+    if "session_id" not in session:
+        import uuid
+        session["session_id"] = str(uuid.uuid4())
+
+    try:
+        arrodes = get_or_create_agent(session["session_id"], "arrodes")
+        summary = arrodes.summarize_discussion(topic, messages)
+
+        # 如果有讨论 ID，更新保存的记录
+        if disc_id:
+            discussion_manager.update_summary(disc_id, summary)
+
+        return jsonify({"summary": summary})
+    except Exception as e:
+        return jsonify({"error": f"总结失败: {str(e)}"}), 500
+
+
 if __name__ == "__main__":
     print("🏢 虚拟工作室启动中...")
     print("📋 需求分析师 | 🏗️ 架构设计师 | 🎨 UI设计师")
     print("🧩 UX设计师   | 💻 代码工程师 | 🧪 测试工程师")
+    print("🪞 记录官·阿罗德斯")
     print(f"🌐 访问地址: http://localhost:5000")
     print("-" * 50)
     app.run(debug=config.DEBUG, host="0.0.0.0", port=5000)

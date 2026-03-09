@@ -811,6 +811,10 @@ body {
     animation: modalFadeIn 0.2s ease;
 }
 
+.modal-content.modal-wide {
+    width: 700px;
+}
+
 @keyframes modalFadeIn {
     from { opacity: 0; transform: scale(0.95); }
     to { opacity: 1; transform: scale(1); }
@@ -970,4 +974,746 @@ body {
 
 .generate-status .btn-view-files:hover {
     background: #16a34a;
+}
+
+
+/* ========================================
+   诡秘之主 · 灰雾之上会议室 (全新沉浸式设计)
+   ======================================== */
+
+.meeting-room {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    opacity: 0;
+    animation: roomEnter 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.meeting-room.hidden { display: none; }
+
+@keyframes roomEnter {
+    0% { opacity: 0; filter: blur(8px) brightness(0.3); }
+    60% { filter: blur(2px) brightness(0.8); }
+    100% { opacity: 1; filter: blur(0) brightness(1); }
+}
+
+/* --- 多层动态背景 --- */
+.meeting-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background: #060410;
+}
+.nebula-layer {
+    position: absolute; inset: -50%;
+    width: 200%; height: 200%;
+    background:
+        radial-gradient(ellipse at 25% 25%, rgba(88, 28, 135, 0.18) 0%, transparent 50%),
+        radial-gradient(ellipse at 75% 60%, rgba(30, 64, 175, 0.12) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 80%, rgba(120, 40, 90, 0.1) 0%, transparent 40%),
+        radial-gradient(ellipse at 60% 10%, rgba(67, 56, 202, 0.08) 0%, transparent 35%);
+    animation: nebulaDrift 30s ease-in-out infinite alternate;
+}
+@keyframes nebulaDrift {
+    0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    50% { transform: translate(-3%, 2%) rotate(1deg) scale(1.02); }
+    100% { transform: translate(2%, -1%) rotate(-0.5deg) scale(1.01); }
+}
+.stars-layer {
+    position: absolute; inset: 0;
+    background-image:
+        radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1px 1px at 30% 65%, rgba(255,255,255,0.3), transparent),
+        radial-gradient(1px 1px at 55% 15%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 70% 45%, rgba(255,255,255,0.25), transparent),
+        radial-gradient(1px 1px at 85% 80%, rgba(255,255,255,0.35), transparent),
+        radial-gradient(1.5px 1.5px at 20% 75%, rgba(200,180,255,0.5), transparent),
+        radial-gradient(1px 1px at 45% 90%, rgba(255,255,255,0.3), transparent),
+        radial-gradient(1.5px 1.5px at 90% 25%, rgba(180,200,255,0.4), transparent),
+        radial-gradient(1px 1px at 65% 55%, rgba(255,255,255,0.2), transparent),
+        radial-gradient(1px 1px at 5% 50%, rgba(255,255,255,0.3), transparent);
+    animation: starsTwinkle 8s ease-in-out infinite alternate;
+}
+@keyframes starsTwinkle {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+.particles-canvas {
+    position: absolute; inset: 0; z-index: 1;
+    pointer-events: none;
+}
+
+/* --- 会议头部 (玻璃态) --- */
+.meeting-header {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 24px;
+    background: rgba(10, 8, 20, 0.55);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(120, 100, 200, 0.12);
+}
+.meeting-header-left {
+    display: flex; align-items: center; gap: 14px;
+}
+.meeting-header-right {
+    display: flex; align-items: center; gap: 16px;
+}
+.meeting-logo-wrap {
+    position: relative; width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+}
+.meeting-logo {
+    font-size: 1.6rem; position: relative; z-index: 1;
+    filter: drop-shadow(0 0 10px rgba(160, 140, 255, 0.5));
+}
+.logo-ring {
+    position: absolute; inset: -3px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(160, 140, 255, 0.3);
+    animation: logoSpin 12s linear infinite;
+}
+@keyframes logoSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.meeting-title {
+    font-size: 1.15rem; color: #e0d4ff;
+    font-weight: 700; letter-spacing: 3px;
+    text-shadow: 0 0 20px rgba(160, 140, 255, 0.25);
+}
+.meeting-subtitle {
+    font-size: 0.72rem; color: rgba(160, 140, 200, 0.45);
+    letter-spacing: 2px; margin-top: 2px;
+}
+.meeting-status {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.75rem; color: rgba(160, 140, 200, 0.6);
+}
+.status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(100, 200, 120, 0.6);
+    box-shadow: 0 0 6px rgba(100, 200, 120, 0.4);
+    animation: dotPulse 2s ease-in-out infinite;
+}
+@keyframes dotPulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+.btn-leave {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #f87171; padding: 7px 16px;
+    border-radius: 8px; cursor: pointer;
+    font-size: 0.8rem; transition: all 0.3s;
+}
+.btn-leave:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
+}
+.leave-icon { font-size: 0.9rem; }
+
+/* --- 主内容 (左圆桌 + 右聊天) --- */
+.meeting-body {
+    flex: 1; display: flex; position: relative; z-index: 5;
+    overflow: hidden;
+}
+
+/* --- 左侧: 诡秘圆桌 --- */
+.meeting-table-area {
+    width: 380px; min-width: 380px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    position: relative; padding: 20px;
+    border-right: 1px solid rgba(120, 100, 200, 0.08);
+}
+
+/* 中央圆桌 */
+.round-table-scene {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 160px; height: 160px;
+}
+.table-outer-ring {
+    position: absolute; inset: -20px;
+    border-radius: 50%;
+    border: 1px solid rgba(120, 100, 200, 0.1);
+    animation: ringPulse 6s ease-in-out infinite;
+}
+.table-inner-ring {
+    position: absolute; inset: -8px;
+    border-radius: 50%;
+    border: 1px dashed rgba(160, 140, 255, 0.15);
+    animation: logoSpin 20s linear infinite reverse;
+}
+.table-core {
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(80, 60, 160, 0.25) 0%, rgba(40, 30, 80, 0.15) 60%, transparent 80%);
+    display: flex; align-items: center; justify-content: center;
+}
+.table-symbol {
+    font-size: 2.5rem;
+    filter: drop-shadow(0 0 20px rgba(160, 140, 255, 0.4));
+    animation: symbolFloat 4s ease-in-out infinite;
+}
+@keyframes symbolFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+.table-pulse {
+    position: absolute; inset: 15%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(140, 120, 255, 0.15) 0%, transparent 70%);
+    animation: corePulse 3s ease-in-out infinite;
+}
+@keyframes corePulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.3); opacity: 0.8; }
+}
+@keyframes ringPulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+}
+.table-runes {
+    position: absolute; inset: -35px;
+    border-radius: 50%;
+    animation: logoSpin 40s linear infinite;
+}
+.table-runes .rune {
+    position: absolute; font-size: 0.7rem;
+    color: rgba(160, 140, 255, 0.2);
+}
+
+/* 环形座席 */
+.seats-orbit {
+    position: absolute; inset: 0;
+    pointer-events: none;
+}
+.seat-card {
+    position: absolute;
+    pointer-events: auto;
+    width: 90px;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 6px; cursor: default;
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    transform-origin: center center;
+    animation: seatAppear 0.6s ease backwards;
+}
+.seat-card:nth-child(1) { animation-delay: 0.1s; }
+.seat-card:nth-child(2) { animation-delay: 0.2s; }
+.seat-card:nth-child(3) { animation-delay: 0.3s; }
+.seat-card:nth-child(4) { animation-delay: 0.4s; }
+.seat-card:nth-child(5) { animation-delay: 0.5s; }
+.seat-card:nth-child(6) { animation-delay: 0.6s; }
+.seat-card:nth-child(7) { animation-delay: 0.7s; }
+
+@keyframes seatAppear {
+    from { opacity: 0; transform: scale(0.5) translateY(20px); }
+    to { opacity: 1; }
+}
+
+.seat-avatar-ring {
+    position: relative; width: 56px; height: 56px;
+}
+.seat-avatar-ring::before {
+    content: ""; position: absolute; inset: -3px;
+    border-radius: 50%;
+    border: 2px solid var(--seat-color, rgba(120, 100, 200, 0.3));
+    opacity: 0.5;
+    transition: all 0.4s;
+}
+.seat-avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem;
+    background: rgba(20, 15, 40, 0.8);
+    border: 2px solid var(--seat-color, rgba(120, 100, 200, 0.3));
+    transition: all 0.4s;
+    position: relative; z-index: 1;
+}
+.seat-name {
+    font-size: 0.7rem; color: rgba(200, 190, 230, 0.8);
+    font-weight: 600; text-align: center;
+    white-space: nowrap; text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+.seat-title {
+    font-size: 0.55rem; color: rgba(160, 140, 200, 0.4);
+    text-align: center;
+}
+.seat-status-bar {
+    display: flex; align-items: center; gap: 3px;
+    min-height: 16px;
+}
+.seat-status-text {
+    font-size: 0.6rem; color: rgba(140, 120, 180, 0.4);
+}
+
+/* Speaking 声波动画 */
+.seat-wave {
+    display: none;
+    align-items: flex-end; gap: 2px; height: 12px;
+}
+.seat-wave span {
+    width: 2px; border-radius: 1px;
+    background: var(--seat-color, #a78bfa);
+    animation: waveBar 0.8s ease-in-out infinite alternate;
+}
+.seat-wave span:nth-child(1) { height: 4px; animation-delay: 0s; }
+.seat-wave span:nth-child(2) { height: 8px; animation-delay: 0.15s; }
+.seat-wave span:nth-child(3) { height: 12px; animation-delay: 0.3s; }
+.seat-wave span:nth-child(4) { height: 6px; animation-delay: 0.45s; }
+
+@keyframes waveBar {
+    0% { transform: scaleY(0.3); }
+    100% { transform: scaleY(1); }
+}
+
+/* 座席状态 */
+.seat-card.speaking {
+    filter: brightness(1.2);
+    z-index: 10;
+}
+.seat-card.speaking .seat-avatar-ring::before {
+    opacity: 1;
+    box-shadow: 0 0 18px var(--seat-color, rgba(160, 140, 255, 0.4));
+    animation: ringGlow 1.5s ease-in-out infinite;
+}
+.seat-card.speaking .seat-avatar {
+    border-color: var(--seat-color);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--seat-color) 40%, transparent);
+}
+.seat-card.speaking .seat-wave { display: flex; }
+.seat-card.speaking .seat-status-text { display: none; }
+.seat-card.speaking .seat-name { color: var(--seat-color); }
+
+@keyframes ringGlow {
+    0%, 100% { box-shadow: 0 0 12px var(--seat-color, rgba(160, 140, 255, 0.3)); }
+    50% { box-shadow: 0 0 24px var(--seat-color, rgba(160, 140, 255, 0.5)); }
+}
+
+.seat-card.done .seat-avatar {
+    border-color: rgba(74, 222, 128, 0.5);
+}
+.seat-card.done .seat-avatar-ring::before {
+    border-color: rgba(74, 222, 128, 0.3);
+    opacity: 0.6;
+}
+.seat-card.done .seat-status-text {
+    color: rgba(74, 222, 128, 0.7);
+}
+
+.seat-card.waiting .seat-status-text {
+    color: rgba(160, 140, 200, 0.4);
+}
+
+/* --- 右侧: 聊天区域 --- */
+.meeting-chat-area {
+    flex: 1; display: flex; flex-direction: column;
+    overflow: hidden; position: relative; z-index: 5;
+    background: rgba(8, 6, 16, 0.3);
+}
+.meeting-messages {
+    flex: 1; overflow-y: auto;
+    padding: 20px 24px;
+    display: flex; flex-direction: column; gap: 14px;
+    scroll-behavior: smooth;
+}
+.meeting-messages::-webkit-scrollbar { width: 4px; }
+.meeting-messages::-webkit-scrollbar-track { background: transparent; }
+.meeting-messages::-webkit-scrollbar-thumb {
+    background: rgba(120, 100, 200, 0.2); border-radius: 4px;
+}
+
+/* 欢迎画面 */
+.meeting-welcome {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    flex: 1; text-align: center; padding: 40px;
+}
+.welcome-glyph {
+    position: relative; width: 80px; height: 80px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 24px;
+}
+.glyph-main {
+    font-size: 2.5rem; position: relative; z-index: 2;
+    filter: drop-shadow(0 0 16px rgba(160, 140, 255, 0.4));
+}
+.glyph-ring {
+    position: absolute; border-radius: 50%;
+    border: 1px solid rgba(160, 140, 255, 0.15);
+}
+.glyph-ring.r1 { inset: -8px; animation: logoSpin 8s linear infinite; }
+.glyph-ring.r2 { inset: -18px; animation: logoSpin 12s linear infinite reverse; border-style: dashed; }
+.glyph-ring.r3 { inset: -28px; animation: logoSpin 16s linear infinite; opacity: 0.5; }
+
+.welcome-title {
+    font-size: 1.1rem; color: rgba(200, 190, 240, 0.7);
+    letter-spacing: 3px; margin-bottom: 8px; font-weight: 400;
+}
+.welcome-desc {
+    font-size: 0.85rem; color: rgba(160, 140, 200, 0.4);
+    letter-spacing: 1px;
+}
+.welcome-divider {
+    display: flex; align-items: center; gap: 12px;
+    margin-top: 20px; color: rgba(160, 140, 200, 0.2);
+}
+.welcome-divider span:not(.divider-gem) {
+    width: 60px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(160, 140, 200, 0.2), transparent);
+}
+.divider-gem { font-size: 0.6rem; }
+
+/* --- 会议消息 --- */
+.meeting-msg {
+    display: flex; gap: 12px;
+    animation: msgSlideIn 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    max-width: 100%;
+}
+.meeting-msg.user-msg {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+    max-width: 80%;
+}
+@keyframes msgSlideIn {
+    from { opacity: 0; transform: translateX(-15px) translateY(8px); }
+    to { opacity: 1; transform: translate(0); }
+}
+.meeting-msg.user-msg { animation-name: msgSlideInRight; }
+@keyframes msgSlideInRight {
+    from { opacity: 0; transform: translateX(15px) translateY(8px); }
+    to { opacity: 1; transform: translate(0); }
+}
+
+.meeting-msg .msg-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.15rem; flex-shrink: 0;
+    background: rgba(20, 15, 40, 0.8);
+    border: 1.5px solid var(--msg-color, rgba(120, 100, 180, 0.3));
+}
+.meeting-msg.user-msg .msg-avatar {
+    background: rgba(79, 70, 229, 0.3);
+    border-color: rgba(129, 140, 248, 0.5);
+    --msg-color: #818cf8;
+}
+
+.meeting-msg .msg-body { flex: 1; min-width: 0; }
+
+.meeting-msg .msg-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+}
+.meeting-msg .msg-name {
+    font-size: 0.78rem; font-weight: 600;
+    color: var(--msg-color, #c4b8e0);
+}
+.meeting-msg .msg-role {
+    font-size: 0.65rem; color: rgba(140, 120, 180, 0.4);
+    padding: 1px 6px; border-radius: 4px;
+    background: rgba(120, 100, 200, 0.08);
+    border: 1px solid rgba(120, 100, 200, 0.1);
+}
+.meeting-msg.user-msg .msg-name { color: #818cf8; }
+.meeting-msg .msg-time {
+    font-size: 0.6rem; color: rgba(140, 120, 180, 0.25);
+    margin-left: auto;
+}
+
+.meeting-msg .msg-content {
+    background: rgba(18, 14, 35, 0.6);
+    border: 1px solid rgba(120, 100, 180, 0.1);
+    border-left: 3px solid var(--msg-color, rgba(120, 100, 180, 0.3));
+    border-radius: 2px 10px 10px 2px;
+    padding: 10px 14px;
+    font-size: 0.88rem; line-height: 1.7;
+    color: #d4ccf0;
+    word-wrap: break-word; overflow-wrap: break-word;
+    backdrop-filter: blur(4px);
+}
+.meeting-msg.user-msg .msg-content {
+    background: rgba(79, 70, 229, 0.12);
+    border-color: rgba(79, 70, 229, 0.2);
+    border-left: 1px solid rgba(79, 70, 229, 0.2);
+    border-right: 3px solid #818cf8;
+    border-radius: 10px 2px 2px 10px;
+}
+
+/* 消息中的 Markdown */
+.meeting-msg .msg-content h1,
+.meeting-msg .msg-content h2,
+.meeting-msg .msg-content h3 {
+    margin: 10px 0 6px; color: #e0d4ff;
+}
+.meeting-msg .msg-content h1 { font-size: 1.1rem; }
+.meeting-msg .msg-content h2 { font-size: 1rem; }
+.meeting-msg .msg-content h3 { font-size: 0.92rem; }
+.meeting-msg .msg-content ul,
+.meeting-msg .msg-content ol { padding-left: 18px; margin: 6px 0; }
+.meeting-msg .msg-content li { margin: 2px 0; }
+.meeting-msg .msg-content code {
+    background: rgba(0, 0, 0, 0.3); padding: 1px 5px;
+    border-radius: 3px; font-family: "Fira Code", "Consolas", monospace;
+    font-size: 0.82rem; color: #c4b8f0;
+}
+.meeting-msg .msg-content pre {
+    background: rgba(0, 0, 0, 0.35); padding: 10px;
+    border-radius: 6px; overflow-x: auto; margin: 8px 0;
+}
+.meeting-msg .msg-content pre code { background: none; padding: 0; }
+.meeting-msg .msg-content strong { color: var(--msg-color, #c4b8f0); }
+.meeting-msg .msg-content blockquote {
+    border-left: 2px solid var(--msg-color, rgba(120,100,200,0.3));
+    margin: 8px 0; padding: 4px 12px;
+    color: rgba(200, 190, 240, 0.6);
+}
+
+/* 发言中动画 */
+.meeting-typing {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 0;
+    color: var(--typing-color, rgba(180, 160, 240, 0.6));
+    font-size: 0.8rem;
+}
+.meeting-typing .typing-dots {
+    display: flex; gap: 3px;
+}
+.meeting-typing .typing-dots span {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--typing-color, rgba(160, 140, 220, 0.5));
+    animation: typingBounce 1.2s ease-in-out infinite;
+}
+.meeting-typing .typing-dots span:nth-child(1) { animation-delay: 0s; }
+.meeting-typing .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+.meeting-typing .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* 输入区域 */
+.meeting-input-area {
+    padding: 14px 24px 18px;
+    background: rgba(10, 8, 20, 0.6);
+    border-top: 1px solid rgba(120, 100, 180, 0.08);
+    position: relative; z-index: 10;
+}
+.meeting-input-container {
+    display: flex; gap: 10px;
+    align-items: flex-end; position: relative;
+}
+.input-glow {
+    position: absolute; inset: -2px; border-radius: 12px;
+    background: linear-gradient(135deg, rgba(120, 100, 200, 0.08), transparent, rgba(100, 80, 180, 0.06));
+    opacity: 0; transition: opacity 0.4s; pointer-events: none;
+}
+.meeting-input-container:focus-within .input-glow { opacity: 1; }
+
+#meeting-input {
+    flex: 1;
+    background: rgba(20, 16, 40, 0.6);
+    border: 1px solid rgba(120, 100, 180, 0.15);
+    border-radius: 10px; padding: 11px 16px;
+    color: #d4ccf0; font-size: 0.88rem;
+    font-family: inherit; resize: none; line-height: 1.5;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    position: relative; z-index: 1;
+}
+#meeting-input:focus {
+    outline: none;
+    border-color: rgba(160, 140, 220, 0.4);
+    box-shadow: 0 0 16px rgba(120, 100, 200, 0.1);
+}
+#meeting-input::placeholder { color: rgba(160, 140, 200, 0.25); }
+
+.btn-meeting-send {
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    border: 1px solid rgba(120, 100, 200, 0.2);
+    background: linear-gradient(135deg, rgba(80, 60, 160, 0.3), rgba(60, 40, 140, 0.2));
+    color: #c4b8f0; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s; position: relative; z-index: 1;
+}
+.btn-meeting-send:hover {
+    background: linear-gradient(135deg, rgba(100, 80, 200, 0.5), rgba(80, 60, 180, 0.3));
+    border-color: rgba(160, 140, 220, 0.4);
+    box-shadow: 0 0 16px rgba(120, 100, 200, 0.2);
+    transform: translateY(-1px);
+}
+.btn-meeting-send:disabled { opacity: 0.25; cursor: not-allowed; transform: none; }
+
+/* 响应式 */
+@media (max-width: 900px) {
+    .meeting-body { flex-direction: column; }
+    .meeting-table-area {
+        width: 100%; min-width: unset;
+        height: 200px; min-height: 200px;
+        border-right: none;
+        border-bottom: 1px solid rgba(120, 100, 200, 0.08);
+    }
+    .round-table-scene { width: 80px; height: 80px; }
+    .table-symbol { font-size: 1.5rem; }
+    .seat-card { width: 60px; }
+    .seat-avatar-ring, .seat-avatar { width: 36px; height: 36px; }
+    .seat-avatar { font-size: 1rem; }
+    .seat-name { font-size: 0.55rem; }
+    .seat-title { display: none; }
+}
+
+/* ========================================
+   讨论记录 & Markdown 查看
+   ======================================== */
+
+.history-list {
+    max-height: 450px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.history-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.history-card:hover {
+    border-color: var(--primary);
+    background: rgba(79, 70, 229, 0.1);
+}
+
+.history-card .history-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+}
+
+.history-card .history-topic {
+    font-weight: 600;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-card .history-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    gap: 12px;
+}
+
+.history-card .history-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+}
+
+.markdown-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.markdown-modal-header h2 {
+    margin-bottom: 0;
+}
+
+.markdown-modal-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.markdown-preview {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 20px 24px;
+    max-height: 55vh;
+    overflow-y: auto;
+    font-size: 0.9rem;
+    line-height: 1.8;
+    color: var(--text-secondary);
+}
+
+.markdown-preview h1 { font-size: 1.3rem; color: var(--text-primary); margin: 16px 0 8px; }
+.markdown-preview h2 { font-size: 1.15rem; color: var(--text-primary); margin: 14px 0 6px; }
+.markdown-preview h3 { font-size: 1rem; color: var(--text-primary); margin: 12px 0 6px; }
+.markdown-preview ul, .markdown-preview ol { padding-left: 20px; margin: 8px 0; }
+.markdown-preview li { margin: 4px 0; }
+.markdown-preview blockquote {
+    border-left: 3px solid var(--primary);
+    padding-left: 14px;
+    margin: 10px 0;
+    color: var(--text-muted);
+}
+.markdown-preview code {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: "Fira Code", "Consolas", monospace;
+    font-size: 0.85rem;
+}
+.markdown-preview pre {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    overflow-x: auto;
+    margin: 8px 0;
+}
+.markdown-preview pre code { background: none; padding: 0; }
+.markdown-preview strong { color: var(--primary-light); }
+.markdown-preview hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 16px 0;
+}
+
+/* 会议保存提示条 */
+.meeting-save-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 10px 20px;
+    background: rgba(34, 197, 94, 0.1);
+    border-top: 1px solid rgba(34, 197, 94, 0.2);
+    animation: fadeIn 0.3s ease;
+}
+
+.meeting-save-bar span {
+    color: var(--success);
+    font-size: 0.85rem;
+}
+
+.meeting-save-bar .btn-small {
+    background: rgba(34, 197, 94, 0.2);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: var(--success);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+}
+
+.meeting-save-bar .btn-small:hover {
+    background: rgba(34, 197, 94, 0.3);
 }
