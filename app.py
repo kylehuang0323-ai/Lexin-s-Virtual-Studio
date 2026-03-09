@@ -252,6 +252,65 @@ def chat_all():
     return jsonify({"results": results})
 
 
+# 智能路由：关键词→角色映射表
+ROUTE_RULES = {
+    "product_manager":     ["产品", "规划", "路线图", "优先级", "MVP", "里程碑", "项目管理", "排期", "上线", "迭代", "版本"],
+    "requirement_analyst": ["需求", "用户故事", "功能", "场景", "业务", "分析", "PRD", "调研"],
+    "architect":           ["架构", "技术方案", "系统设计", "数据库", "微服务", "API", "性能", "扩展", "部署"],
+    "ui_designer":         ["UI", "界面", "视觉", "颜色", "配色", "布局", "图标", "设计稿", "样式"],
+    "ux_designer":         ["UX", "体验", "交互", "流程", "用户旅程", "可用性", "原型", "导航"],
+    "developer":           ["代码", "开发", "实现", "编程", "前端", "后端", "bug", "接口", "编码", "工程"],
+    "tester":              ["测试", "质量", "缺陷", "用例", "回归", "自动化测试", "验收", "QA"],
+}
+
+
+def smart_route_agents(message: str, explicit_ids: list) -> list:
+    """智能路由：根据 @提及 + 关键词 + 业务流程判断谁应该发言"""
+    # 1. 显式 @ 提及优先
+    if explicit_ids:
+        return explicit_ids
+
+    # 2. 关键词匹配
+    matched = set()
+    msg_lower = message.lower()
+    for agent_id, keywords in ROUTE_RULES.items():
+        for kw in keywords:
+            if kw.lower() in msg_lower:
+                matched.add(agent_id)
+                break
+
+    # 3. 如果没匹配到任何角色，交给产品经理（指挥中枢）做首轮判断
+    if not matched:
+        matched.add("product_manager")
+
+    # 4. 阿罗德斯始终旁听但不主动发言（除非被 @ ）
+    matched.discard("arrodes")
+
+    return list(matched)
+
+
+@app.route("/api/chat/route", methods=["POST"])
+@login_required
+def chat_route():
+    """智能路由 - 根据 @提及 / 关键词 / 业务流程决定谁发言"""
+    data = request.get_json()
+    user_message = data.get("message", "").strip()
+    explicit_ids = data.get("target_agents", [])  # 前端解析的 @ 列表
+
+    if not user_message:
+        return jsonify({"error": "消息不能为空"}), 400
+
+    if not get_user_api_key():
+        return jsonify({"error": "请先在设置中配置你的 API Key", "need_apikey": True}), 400
+
+    routed = smart_route_agents(user_message, explicit_ids)
+
+    return jsonify({
+        "routed_agents": routed,
+        "route_mode": "mention" if explicit_ids else "smart",
+    })
+
+
 @app.route("/api/clear", methods=["POST"])
 @login_required
 def clear_history():

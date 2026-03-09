@@ -197,11 +197,18 @@ function bindEvents() {
     });
 
     elements.meetingInput.addEventListener("keydown", (e) => {
+        // @ 弹窗打开时让弹窗处理方向键和回车
+        const popup = document.getElementById("mention-popup");
+        if (!popup.classList.contains("hidden") && ["ArrowUp","ArrowDown"].includes(e.key)) return;
+        if (!popup.classList.contains("hidden") && e.key === "Enter" && !e.shiftKey && mentionPopupIndex >= 0) return;
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             meetingSend();
         }
     });
+
+    // 初始化 @ 提及监听
+    setupMentionListener();
 }
 
 // ========================================
@@ -507,28 +514,65 @@ function removeMeetingTyping(id) {
 }
 
 async function meetingSend() {
-    const message = elements.meetingInput.value.trim();
-    if (!message || state.isLoading) return;
+    const rawMessage = elements.meetingInput.value.trim();
+    if (!rawMessage || state.isLoading) return;
 
     state.isLoading = true;
     elements.meetingInput.value = "";
     elements.btnMeetingSend.disabled = true;
     elements.meetingInput.disabled = true;
+    hideMentionPopup();
+
+    // 解析 @ 提及
+    const { cleanMessage, mentionedIds } = parseMentions(rawMessage);
+    const displayMsg = rawMessage;
 
     // Show user message
-    appendMeetingMsg("user", "👤", "你", "", message);
-    setMeetingStatus("讨论进行中...");
+    appendMeetingMsg("user", "👤", "你", "", displayMsg);
+    setMeetingStatus("路由分析中...");
 
-    // Track messages for saving
+    // 请求智能路由
+    let targetAgents = mentionedIds;
+    let routeMode = mentionedIds.length > 0 ? "mention" : "smart";
+    if (!targetAgents.length) {
+        try {
+            const routeRes = await fetch("/api/chat/route", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: cleanMessage, target_agents: [] })
+            });
+            const routeData = await routeRes.json();
+            targetAgents = routeData.routed_agents || [];
+            routeMode = routeData.route_mode || "smart";
+        } catch (e) {
+            // 回退：全员发言
+            targetAgents = state.meetingAgents.map(a => a.id).filter(id => id !== "arrodes");
+            routeMode = "fallback";
+        }
+    }
+
+    // 显示路由指示器
+    showRouteIndicator(targetAgents, routeMode);
+
+    const msgToSend = cleanMessage || rawMessage;
     const meetingLog = [{
-        role: "user", name: "你", icon: "👤", content: message, meeting_title: ""
+        role: "user", name: "你", icon: "👤", content: displayMsg, meeting_title: ""
     }];
 
-    // Mark all agents as waiting
-    state.meetingAgents.forEach(a => setSeatState(a.id, "waiting"));
+    // 设置座位状态：目标设为 waiting，其余设为 skipped
+    state.meetingAgents.forEach(a => {
+        if (targetAgents.includes(a.id)) {
+            setSeatState(a.id, "waiting");
+        } else {
+            setSeatState(a.id, "skipped");
+        }
+    });
 
-    // Call each agent sequentially for a meeting-like experience
-    for (const agent of state.meetingAgents) {
+    setMeetingStatus(`${targetAgents.length} 位成员发言中...`);
+
+    // 依次调用目标 Agent
+    const agentsToCall = state.meetingAgents.filter(a => targetAgents.includes(a.id));
+    for (const agent of agentsToCall) {
         setSeatState(agent.id, "speaking");
         const typingId = showMeetingTyping(agent.meeting_name);
 
@@ -536,10 +580,7 @@ async function meetingSend() {
             const res = await fetch("/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    message: message,
-                    agent_id: agent.id
-                })
+                body: JSON.stringify({ message: msgToSend, agent_id: agent.id })
             });
             const data = await res.json();
             removeMeetingTyping(typingId);
@@ -570,13 +611,11 @@ async function meetingSend() {
         const saveRes = await fetch("/api/discussion/save", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ topic: message, messages: meetingLog })
+            body: JSON.stringify({ topic: msgToSend, messages: meetingLog })
         });
         const saveData = await saveRes.json();
         state.currentDiscussionId = saveData.id;
-
-        // Show save bar with summarize option
-        showMeetingSaveBar(saveData.id, message, meetingLog);
+        showMeetingSaveBar(saveData.id, msgToSend, meetingLog);
     } catch (err) {
         console.error("自动保存讨论失败:", err);
     }
@@ -587,11 +626,185 @@ async function meetingSend() {
     elements.meetingInput.disabled = false;
     elements.meetingInput.focus();
 
-    // Reset seat states after a delay
     setTimeout(() => {
         state.meetingAgents.forEach(a => setSeatState(a.id, "idle"));
         setMeetingStatus("等待议题");
     }, 3000);
+}
+
+// ========================================
+// @ 提及系统
+// ========================================
+
+// 角色名称→ID 映射（含别名）
+function buildMentionMap() {
+    const map = {};
+    state.meetingAgents.forEach(a => {
+        // 软件角色名
+        map[a.name] = a.id;
+        // 塔罗会名
+        map[a.meeting_name] = a.id;
+        // 简称（去掉「」和·前后）
+        const short = a.meeting_name.replace(/[「」]/g, "").split("·");
+        short.forEach(s => { if (s.length >= 2) map[s] = a.id; });
+    });
+    return map;
+}
+
+function parseMentions(message) {
+    const mentionMap = buildMentionMap();
+    const mentionedIds = [];
+    let cleanMessage = message;
+    // 匹配 @xxx 格式（贪婪匹配到空格或末尾）
+    const regex = /@([^\s@]+)/g;
+    let match;
+    while ((match = regex.exec(message)) !== null) {
+        const name = match[1];
+        // 精确匹配
+        if (mentionMap[name]) {
+            if (!mentionedIds.includes(mentionMap[name])) {
+                mentionedIds.push(mentionMap[name]);
+            }
+            cleanMessage = cleanMessage.replace(match[0], "").trim();
+        } else {
+            // 模糊匹配
+            for (const [key, id] of Object.entries(mentionMap)) {
+                if (key.includes(name) || name.includes(key)) {
+                    if (!mentionedIds.includes(id)) mentionedIds.push(id);
+                    cleanMessage = cleanMessage.replace(match[0], "").trim();
+                    break;
+                }
+            }
+        }
+    }
+    cleanMessage = cleanMessage.replace(/\s+/g, " ").trim();
+    return { cleanMessage: cleanMessage || message, mentionedIds };
+}
+
+function showRouteIndicator(agentIds, mode) {
+    // Remove existing indicator
+    const existing = document.querySelector(".route-indicator");
+    if (existing) existing.remove();
+
+    const container = document.createElement("div");
+    container.className = "route-indicator";
+
+    const label = document.createElement("span");
+    label.className = "route-label";
+    label.textContent = mode === "mention" ? "📢 指定发言：" : "🧠 智能路由：";
+    container.appendChild(label);
+
+    agentIds.forEach(id => {
+        const agent = state.meetingAgents.find(a => a.id === id);
+        if (!agent) return;
+        const tag = document.createElement("span");
+        tag.className = "route-tag";
+        const color = CHARACTER_COLORS[id] || "#a78bfa";
+        tag.style.background = `${color}20`;
+        tag.style.color = color;
+        tag.style.borderColor = `${color}40`;
+        tag.textContent = `${agent.meeting_icon} ${agent.meeting_name}`;
+        container.appendChild(tag);
+    });
+
+    elements.meetingMessages.appendChild(container);
+    elements.meetingMessages.scrollTop = elements.meetingMessages.scrollHeight;
+}
+
+// @ 弹窗逻辑
+let mentionPopupIndex = -1;
+
+function setupMentionListener() {
+    elements.meetingInput.addEventListener("input", handleMentionInput);
+    elements.meetingInput.addEventListener("keydown", handleMentionKeydown);
+}
+
+function handleMentionInput() {
+    const val = elements.meetingInput.value;
+    const cursor = elements.meetingInput.selectionStart;
+    // 找到光标前最近的 @
+    const before = val.substring(0, cursor);
+    const atIdx = before.lastIndexOf("@");
+    if (atIdx === -1 || (atIdx > 0 && before[atIdx - 1] !== " " && before[atIdx - 1] !== "\n")) {
+        hideMentionPopup();
+        return;
+    }
+    const query = before.substring(atIdx + 1).toLowerCase();
+    showMentionPopup(query, atIdx);
+}
+
+function handleMentionKeydown(e) {
+    const popup = document.getElementById("mention-popup");
+    if (popup.classList.contains("hidden")) return;
+    const items = popup.querySelectorAll(".mention-item");
+    if (!items.length) return;
+
+    if (e.key === "ArrowDown") {
+        e.preventDefault();
+        mentionPopupIndex = Math.min(mentionPopupIndex + 1, items.length - 1);
+        updateMentionActive(items);
+    } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        mentionPopupIndex = Math.max(mentionPopupIndex - 1, 0);
+        updateMentionActive(items);
+    } else if (e.key === "Enter" && !e.shiftKey && mentionPopupIndex >= 0) {
+        e.preventDefault();
+        const selected = items[mentionPopupIndex];
+        if (selected) selectMention(selected.dataset.name);
+    } else if (e.key === "Escape") {
+        hideMentionPopup();
+    }
+}
+
+function updateMentionActive(items) {
+    items.forEach((it, i) => it.classList.toggle("active", i === mentionPopupIndex));
+}
+
+function showMentionPopup(query, atIdx) {
+    const popup = document.getElementById("mention-popup");
+    // 过滤匹配的角色（不含阿罗德斯）
+    const candidates = state.meetingAgents.filter(a => {
+        if (a.id === "arrodes") return false;
+        const q = query.toLowerCase();
+        return !q || a.name.toLowerCase().includes(q)
+            || a.meeting_name.toLowerCase().includes(q)
+            || a.id.toLowerCase().includes(q);
+    });
+
+    if (!candidates.length) { hideMentionPopup(); return; }
+
+    popup.innerHTML = candidates.map(a => {
+        const color = CHARACTER_COLORS[a.id] || "#a78bfa";
+        return `<div class="mention-item" data-name="${a.name}" data-id="${a.id}" onclick="selectMention('${a.name}')">
+            <span class="mention-item-icon">${a.meeting_icon}</span>
+            <div class="mention-item-info">
+                <div class="mention-item-name" style="color:${color}">${a.meeting_name}</div>
+                <div class="mention-item-title">${a.name} · ${a.meeting_title}</div>
+            </div>
+        </div>`;
+    }).join("");
+
+    mentionPopupIndex = 0;
+    updateMentionActive(popup.querySelectorAll(".mention-item"));
+    popup.classList.remove("hidden");
+}
+
+function hideMentionPopup() {
+    document.getElementById("mention-popup").classList.add("hidden");
+    mentionPopupIndex = -1;
+}
+
+function selectMention(name) {
+    const val = elements.meetingInput.value;
+    const cursor = elements.meetingInput.selectionStart;
+    const before = val.substring(0, cursor);
+    const atIdx = before.lastIndexOf("@");
+    const after = val.substring(cursor);
+    const newVal = before.substring(0, atIdx) + `@${name} ` + after;
+    elements.meetingInput.value = newVal;
+    elements.meetingInput.selectionStart = elements.meetingInput.selectionEnd = atIdx + name.length + 2;
+    elements.meetingInput.focus();
+    hideMentionPopup();
 }
 
 function showMeetingSaveBar(discId, topic, messages) {

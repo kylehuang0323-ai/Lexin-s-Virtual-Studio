@@ -237,7 +237,7 @@
                         <div class="input-glow"></div>
                         <textarea
                             id="meeting-input"
-                            placeholder="在灰雾之上提出你的议题..."
+                            placeholder="输入议题... 用 @ 指定角色发言，如 @产品经理 @架构设计师"
                             rows="2"
                         ></textarea>
                         <button id="btn-meeting-send" class="btn-meeting-send" title="发送">
@@ -246,6 +246,10 @@
                                 <path d="M22 2L15 22L11 13L2 9L22 2Z"/>
                             </svg>
                         </button>
+                    </div>
+                    <!-- @ 提及自动补全 -->
+                    <div id="mention-popup" class="mention-popup hidden">
+                        <!-- JS 动态填充 -->
                     </div>
                 </div>
             </div>
