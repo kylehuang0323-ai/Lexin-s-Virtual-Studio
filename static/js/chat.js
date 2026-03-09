@@ -1,13 +1,29 @@
 /**
- * 虚拟工作室 - 前端聊天逻辑 + 项目文件管理
+ * 虚拟工作室 - 前端聊天逻辑 + 项目文件管理 + 诡秘之主会议室
  */
+
+// 角色专属色彩系统
+const CHARACTER_COLORS = {
+    requirement_analyst: "#eab308",  // Gold
+    architect:           "#a78bfa",  // Purple
+    ui_designer:         "#f472b6",  // Rose
+    ux_designer:         "#60a5fa",  // Sky
+    developer:           "#fb923c",  // Amber
+    tester:              "#f87171",  // Red
+    arrodes:             "#67e8f9",  // Cyan
+};
 
 // 状态管理
 const state = {
     currentAgentId: "requirement_analyst",
     agents: [],
+    meetingAgents: [],
     isLoading: false,
-    currentProject: null  // 当前查看的项目名
+    currentProject: null,
+    inMeeting: false,
+    particlesCtx: null,
+    particles: [],
+    particlesRAF: null,
 };
 
 // DOM 元素
@@ -40,7 +56,25 @@ const elements = {
     // 项目列表弹窗
     projectsModal: document.getElementById("projects-modal"),
     projectsList: document.getElementById("projects-list"),
-    btnProjectsClose: document.getElementById("btn-projects-close")
+    btnProjectsClose: document.getElementById("btn-projects-close"),
+    // 会议室
+    meetingRoom: document.getElementById("meeting-room"),
+    meetingParticipants: document.getElementById("meeting-participants"),
+    meetingMessages: document.getElementById("meeting-messages"),
+    meetingInput: document.getElementById("meeting-input"),
+    btnMeetingSend: document.getElementById("btn-meeting-send"),
+    btnLeaveMeeting: document.getElementById("btn-leave-meeting"),
+    // 讨论记录
+    btnHistory: document.getElementById("btn-history"),
+    historyModal: document.getElementById("history-modal"),
+    historyList: document.getElementById("history-list"),
+    btnHistoryClose: document.getElementById("btn-history-close"),
+    // Markdown 查看
+    markdownModal: document.getElementById("markdown-modal"),
+    markdownTitle: document.getElementById("markdown-modal-title"),
+    markdownContent: document.getElementById("markdown-content"),
+    btnMarkdownClose: document.getElementById("btn-markdown-close"),
+    btnResumeDiscussion: document.getElementById("btn-resume-discussion"),
 };
 
 // ========================================
@@ -49,6 +83,7 @@ const elements = {
 
 async function init() {
     await loadAgents();
+    await loadMeetingAgents();
     bindEvents();
 }
 
@@ -63,9 +98,19 @@ async function loadAgents() {
     }
 }
 
+async function loadMeetingAgents() {
+    try {
+        const res = await fetch("/api/agents/meeting");
+        const data = await res.json();
+        state.meetingAgents = data.agents;
+    } catch (err) {
+        console.error("加载会议角色失败:", err);
+    }
+}
+
 function bindEvents() {
     elements.btnSend.addEventListener("click", sendMessage);
-    elements.btnAskAll.addEventListener("click", askAllAgents);
+    elements.btnAskAll.addEventListener("click", enterMeeting);
     elements.btnClear.addEventListener("click", clearHistory);
     elements.btnGenerate.addEventListener("click", openGenerateModal);
     elements.btnProjects.addEventListener("click", openProjectsModal);
@@ -82,10 +127,29 @@ function bindEvents() {
     elements.btnProjectsClose.addEventListener("click", closeProjectsModal);
     elements.projectsModal.querySelector(".modal-overlay").addEventListener("click", closeProjectsModal);
 
+    // 会议室
+    elements.btnMeetingSend.addEventListener("click", meetingSend);
+    elements.btnLeaveMeeting.addEventListener("click", leaveMeeting);
+
+    // 讨论记录
+    elements.btnHistory.addEventListener("click", openHistoryModal);
+    elements.btnHistoryClose.addEventListener("click", closeHistoryModal);
+    elements.historyModal.querySelector(".modal-overlay").addEventListener("click", closeHistoryModal);
+    elements.btnMarkdownClose.addEventListener("click", closeMarkdownModal);
+    elements.markdownModal.querySelector(".modal-overlay").addEventListener("click", closeMarkdownModal);
+    elements.btnResumeDiscussion.addEventListener("click", resumeCurrentDiscussion);
+
     elements.userInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             sendMessage();
+        }
+    });
+
+    elements.meetingInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            meetingSend();
         }
     });
 }
@@ -122,7 +186,7 @@ function selectAgent(agentId) {
 }
 
 // ========================================
-// 消息发送
+// 消息发送（普通模式）
 // ========================================
 
 async function sendMessage() {
@@ -164,45 +228,346 @@ async function sendMessage() {
     elements.userInput.focus();
 }
 
-async function askAllAgents() {
-    const message = elements.userInput.value.trim();
+// ========================================
+// 诡秘之主 · 灰雾之上会议室
+// ========================================
+
+function enterMeeting() {
+    state.inMeeting = true;
+    elements.meetingRoom.classList.remove("hidden");
+    renderMeetingParticipants();
+    initParticles();
+    renderTableRunes();
+    elements.meetingInput.focus();
+}
+
+function leaveMeeting() {
+    state.inMeeting = false;
+    elements.meetingRoom.classList.add("hidden");
+    stopParticles();
+}
+
+// --- Canvas 粒子系统 ---
+function initParticles() {
+    const canvas = document.getElementById("particles-canvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    state.particlesCtx = ctx;
+    state.particles = [];
+    
+    for (let i = 0; i < 40; i++) {
+        state.particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            r: Math.random() * 1.5 + 0.3,
+            dx: (Math.random() - 0.5) * 0.3,
+            dy: -Math.random() * 0.4 - 0.1,
+            alpha: Math.random() * 0.4 + 0.1,
+            color: Math.random() > 0.7 ? "180,160,255" : "160,140,220",
+        });
+    }
+    animateParticles();
+}
+
+function animateParticles() {
+    const ctx = state.particlesCtx;
+    const canvas = ctx.canvas;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    state.particles.forEach(p => {
+        p.x += p.dx;
+        p.y += p.dy;
+        if (p.y < -10) { p.y = canvas.height + 10; p.x = Math.random() * canvas.width; }
+        if (p.x < -10) p.x = canvas.width + 10;
+        if (p.x > canvas.width + 10) p.x = -10;
+        
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${p.color}, ${p.alpha})`;
+        ctx.fill();
+    });
+    
+    state.particlesRAF = requestAnimationFrame(animateParticles);
+}
+
+function stopParticles() {
+    if (state.particlesRAF) {
+        cancelAnimationFrame(state.particlesRAF);
+        state.particlesRAF = null;
+    }
+}
+
+// --- 神秘符文 ---
+function renderTableRunes() {
+    const runesEl = document.getElementById("table-runes");
+    if (!runesEl) return;
+    const symbols = ["☿", "♃", "♄", "⚹", "☽", "✦", "⊕", "△", "⟡", "✧", "⬡", "⬢"];
+    runesEl.innerHTML = symbols.map((s, i) => {
+        const angle = (i / symbols.length) * 360;
+        const rad = angle * Math.PI / 180;
+        const r = 50;
+        const x = 50 + r * Math.cos(rad);
+        const y = 50 + r * Math.sin(rad);
+        return `<span class="rune" style="left:${x}%;top:${y}%;transform:translate(-50%,-50%)">${s}</span>`;
+    }).join("");
+}
+
+// --- 环形座席渲染 ---
+function renderMeetingParticipants() {
+    const container = elements.meetingParticipants;
+    const area = document.querySelector(".meeting-table-area");
+    if (!container || !area) return;
+    
+    const agents = state.meetingAgents;
+    const n = agents.length;
+    
+    container.innerHTML = agents.map((agent, i) => {
+        const color = CHARACTER_COLORS[agent.id] || "#a78bfa";
+        return `
+            <div class="seat-card" data-agent-id="${agent.id}" id="seat-${agent.id}"
+                 style="--seat-color: ${color}; --seat-index: ${i}">
+                <div class="seat-avatar-ring">
+                    <div class="seat-avatar">${agent.meeting_icon}</div>
+                </div>
+                <div class="seat-name">${agent.meeting_name}</div>
+                <div class="seat-title">${agent.meeting_title}</div>
+                <div class="seat-status-bar">
+                    <div class="seat-wave">
+                        <span></span><span></span><span></span><span></span>
+                    </div>
+                    <span class="seat-status-text" id="seat-status-${agent.id}"></span>
+                </div>
+            </div>
+        `;
+    }).join("");
+    
+    // Position in orbit after render
+    requestAnimationFrame(() => positionSeatsInOrbit());
+    
+    // Reposition on resize
+    window.addEventListener("resize", positionSeatsInOrbit);
+}
+
+function positionSeatsInOrbit() {
+    const area = document.querySelector(".meeting-table-area");
+    if (!area) return;
+    const rect = area.getBoundingClientRect();
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
+    const rx = Math.min(cx - 60, 155); // horizontal radius
+    const ry = Math.min(cy - 55, 155); // vertical radius
+    
+    const cards = document.querySelectorAll(".seat-card");
+    const n = cards.length;
+    const startAngle = -90; // top center
+    
+    cards.forEach((card, i) => {
+        const angle = startAngle + (i / n) * 360;
+        const rad = angle * Math.PI / 180;
+        const x = cx + rx * Math.cos(rad) - card.offsetWidth / 2;
+        const y = cy + ry * Math.sin(rad) - card.offsetHeight / 2;
+        card.style.left = `${x}px`;
+        card.style.top = `${y}px`;
+    });
+}
+
+function setSeatState(agentId, seatState) {
+    const seat = document.getElementById(`seat-${agentId}`);
+    const status = document.getElementById(`seat-status-${agentId}`);
+    if (!seat || !status) return;
+
+    seat.classList.remove("speaking", "done", "waiting");
+    if (seatState === "speaking") {
+        seat.classList.add("speaking");
+        status.textContent = "";
+    } else if (seatState === "done") {
+        seat.classList.add("done");
+        status.textContent = "✓ 已发言";
+    } else if (seatState === "waiting") {
+        seat.classList.add("waiting");
+        status.textContent = "等待中";
+    } else {
+        status.textContent = "";
+    }
+}
+
+function setMeetingStatus(text) {
+    const statusEl = document.getElementById("meeting-status");
+    if (statusEl) {
+        statusEl.querySelector(".status-text").textContent = text;
+    }
+}
+
+function appendMeetingMsg(type, icon, name, role, content) {
+    // Remove welcome if present
+    const welcome = elements.meetingMessages.querySelector(".meeting-welcome");
+    if (welcome) welcome.remove();
+
+    const div = document.createElement("div");
+    div.className = `meeting-msg ${type === "user" ? "user-msg" : ""}`;
+
+    const formattedContent = type === "agent" ? formatMarkdown(content) : escapeHtml(content);
+    
+    // Find agent color
+    const agent = state.meetingAgents.find(a => a.meeting_name === name);
+    const color = agent ? (CHARACTER_COLORS[agent.id] || "#a78bfa") : "#818cf8";
+    
+    const time = new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+
+    div.style.setProperty("--msg-color", type === "user" ? "#818cf8" : color);
+    div.innerHTML = `
+        <div class="msg-avatar">${icon}</div>
+        <div class="msg-body">
+            <div class="msg-header">
+                <span class="msg-name">${escapeHtml(name)}</span>
+                ${role ? `<span class="msg-role">${escapeHtml(role)}</span>` : ""}
+                <span class="msg-time">${time}</span>
+            </div>
+            <div class="msg-content">${formattedContent}</div>
+        </div>
+    `;
+
+    elements.meetingMessages.appendChild(div);
+    elements.meetingMessages.scrollTop = elements.meetingMessages.scrollHeight;
+}
+
+function showMeetingTyping(name) {
+    const id = "meeting-typing-" + Date.now();
+    const agent = state.meetingAgents.find(a => a.meeting_name === name);
+    const color = agent ? (CHARACTER_COLORS[agent.id] || "#a78bfa") : "#a78bfa";
+    
+    const div = document.createElement("div");
+    div.className = "meeting-typing";
+    div.id = id;
+    div.style.setProperty("--typing-color", color);
+    div.innerHTML = `
+        <span>${escapeHtml(name)} 正在发言</span>
+        <div class="typing-dots"><span></span><span></span><span></span></div>
+    `;
+    elements.meetingMessages.appendChild(div);
+    elements.meetingMessages.scrollTop = elements.meetingMessages.scrollHeight;
+    return id;
+}
+
+function removeMeetingTyping(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+}
+
+async function meetingSend() {
+    const message = elements.meetingInput.value.trim();
     if (!message || state.isLoading) return;
 
-    clearWelcome();
-    appendMessage("user", "👤", message);
-    elements.userInput.value = "";
-
-    const divider = document.createElement("div");
-    divider.className = "team-discussion-divider";
-    divider.textContent = "🗣️ 全员讨论";
-    elements.chatMessages.appendChild(divider);
-
-    const loadingId = showLoading();
     state.isLoading = true;
-    setInputEnabled(false);
+    elements.meetingInput.value = "";
+    elements.btnMeetingSend.disabled = true;
+    elements.meetingInput.disabled = true;
 
-    try {
-        const res = await fetch("/api/chat/all", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: message })
-        });
-        const data = await res.json();
-        removeLoading(loadingId);
+    // Show user message
+    appendMeetingMsg("user", "👤", "你", "", message);
+    setMeetingStatus("讨论进行中...");
 
-        if (data.results) {
-            data.results.forEach(result => {
-                appendMessage("agent", result.agent_icon, result.reply, result.agent_name);
+    // Track messages for saving
+    const meetingLog = [{
+        role: "user", name: "你", icon: "👤", content: message, meeting_title: ""
+    }];
+
+    // Mark all agents as waiting
+    state.meetingAgents.forEach(a => setSeatState(a.id, "waiting"));
+
+    // Call each agent sequentially for a meeting-like experience
+    for (const agent of state.meetingAgents) {
+        setSeatState(agent.id, "speaking");
+        const typingId = showMeetingTyping(agent.meeting_name);
+
+        try {
+            const res = await fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    message: message,
+                    agent_id: agent.id
+                })
+            });
+            const data = await res.json();
+            removeMeetingTyping(typingId);
+
+            const reply = data.error ? `⚠️ ${data.error}` : data.reply;
+            appendMeetingMsg("agent", agent.meeting_icon, agent.meeting_name, agent.name, reply);
+            meetingLog.push({
+                role: "agent", name: agent.meeting_name, icon: agent.meeting_icon,
+                content: reply, meeting_title: agent.meeting_title, agent_id: agent.id
+            });
+        } catch (err) {
+            removeMeetingTyping(typingId);
+            const errMsg = `⚠️ 网络错误: ${err.message}`;
+            appendMeetingMsg("agent", agent.meeting_icon, agent.meeting_name, agent.name, errMsg);
+            meetingLog.push({
+                role: "agent", name: agent.meeting_name, icon: agent.meeting_icon,
+                content: errMsg, meeting_title: agent.meeting_title, agent_id: agent.id
             });
         }
-    } catch (err) {
-        removeLoading(loadingId);
-        appendMessage("agent", "⚠️", `网络错误: ${err.message}`, "系统提示");
+
+        setSeatState(agent.id, "done");
     }
 
+    setMeetingStatus("讨论完成 ✓");
+
+    // Auto-save discussion
+    try {
+        const saveRes = await fetch("/api/discussion/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ topic: message, messages: meetingLog })
+        });
+        const saveData = await saveRes.json();
+        state.currentDiscussionId = saveData.id;
+
+        // Show save bar with summarize option
+        showMeetingSaveBar(saveData.id, message, meetingLog);
+    } catch (err) {
+        console.error("自动保存讨论失败:", err);
+    }
+
+    // Reset
     state.isLoading = false;
-    setInputEnabled(true);
-    elements.userInput.focus();
+    elements.btnMeetingSend.disabled = false;
+    elements.meetingInput.disabled = false;
+    elements.meetingInput.focus();
+
+    // Reset seat states after a delay
+    setTimeout(() => {
+        state.meetingAgents.forEach(a => setSeatState(a.id, "idle"));
+        setMeetingStatus("等待议题");
+    }, 3000);
+}
+
+function showMeetingSaveBar(discId, topic, messages) {
+    // Remove existing save bar
+    const existing = document.querySelector(".meeting-save-bar");
+    if (existing) existing.remove();
+
+    const bar = document.createElement("div");
+    bar.className = "meeting-save-bar";
+    bar.innerHTML = `
+        <span>✅ 讨论已自动保存</span>
+        <button class="btn-small" onclick="viewDiscussionMarkdown('${discId}')">📝 查看纪要</button>
+        <button class="btn-small" id="btn-summarize" onclick="requestSummary('${discId}')">🪞 阿罗德斯总结</button>
+    `;
+
+    // Insert before the input area
+    const inputArea = document.querySelector(".meeting-input-area");
+    inputArea.parentNode.insertBefore(bar, inputArea);
+}
+
+// ========================================
+// 普通全员讨论 (legacy, now redirects to meeting)
+// ========================================
+
+async function askAllAgents() {
+    enterMeeting();
 }
 
 async function clearHistory() {
@@ -213,6 +578,24 @@ async function clearHistory() {
                 <div class="welcome-icon">🏢</div>
                 <h2>对话已清除</h2>
                 <p>开始新的对话吧！描述你的创意或想法。</p>
+            </div>
+        `;
+        // Also reset meeting messages
+        elements.meetingMessages.innerHTML = `
+            <div class="meeting-welcome">
+                <div class="welcome-glyph">
+                    <span class="glyph-main">🌫️</span>
+                    <div class="glyph-rings">
+                        <div class="glyph-ring r1"></div>
+                        <div class="glyph-ring r2"></div>
+                        <div class="glyph-ring r3"></div>
+                    </div>
+                </div>
+                <h3 class="welcome-title">灰雾弥漫，长桌显现</h3>
+                <p class="welcome-desc">七位非凡者已就座，等待您的议题</p>
+                <div class="welcome-divider">
+                    <span></span><span class="divider-gem">◆</span><span></span>
+                </div>
             </div>
         `;
     } catch (err) {
@@ -253,7 +636,6 @@ async function confirmGenerate() {
     closeGenerateModal();
     clearWelcome();
 
-    // 在聊天中显示生成请求
     appendMessage("user", "👤", `📦 请生成项目「${projectName}」\n\n${requirement}`);
 
     const loadingId = showLoading();
@@ -275,15 +657,10 @@ async function confirmGenerate() {
         if (data.error) {
             appendMessage("agent", "⚠️", `生成失败: ${data.error}`, "系统提示");
         } else {
-            // 显示开发文档摘要
             if (data.dev_doc) {
                 appendMessage("agent", "💻", data.dev_doc, "代码工程师 - 开发文档");
             }
-
-            // 显示生成结果状态卡片
             appendGenerateStatus(data);
-
-            // 打开文件面板
             state.currentProject = projectName;
             showFilePanel(projectName, data.file_tree);
         }
@@ -301,12 +678,10 @@ function appendGenerateStatus(data) {
     statusDiv.className = "generate-status";
 
     const createdCount = data.files_created ? data.files_created.length : 0;
-    const errorCount = data.errors ? data.errors.length : 0;
 
     let html = `
         <div class="status-header">
-            ✅ 项目「${escapeHtml(data.project_name)}」生成完成！
-            共 ${createdCount + 1} 个文件
+            ✅ 项目「${escapeHtml(data.project_name)}」生成完成！共 ${createdCount + 1} 个文件
         </div>
         <div class="file-list">
             <div class="file-item">开发文档.md</div>
@@ -317,7 +692,6 @@ function appendGenerateStatus(data) {
             html += `<div class="file-item">${escapeHtml(f)}</div>`;
         });
     }
-
     if (data.errors && data.errors.length > 0) {
         data.errors.forEach(e => {
             html += `<div class="error-item">${escapeHtml(e.path)}: ${escapeHtml(e.error)}</div>`;
@@ -470,7 +844,6 @@ function formatFileSize(bytes) {
 async function previewFile(filePath) {
     if (!state.currentProject) return;
 
-    // 高亮当前文件
     elements.fileTreeContainer.querySelectorAll(".tree-item").forEach(el => el.classList.remove("active"));
     const items = elements.fileTreeContainer.querySelectorAll(".tree-item");
     items.forEach(el => {
@@ -564,6 +937,168 @@ function setInputEnabled(enabled) {
 
 function scrollToBottom() {
     elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+}
+
+// ========================================
+// 讨论记录管理
+// ========================================
+
+function openHistoryModal() {
+    elements.historyModal.classList.remove("hidden");
+    loadHistoryList();
+}
+
+function closeHistoryModal() {
+    elements.historyModal.classList.add("hidden");
+}
+
+async function loadHistoryList() {
+    elements.historyList.innerHTML = '<p class="loading-text">加载中...</p>';
+
+    try {
+        const res = await fetch("/api/discussion/list");
+        const data = await res.json();
+
+        if (!data.discussions || data.discussions.length === 0) {
+            elements.historyList.innerHTML = '<p class="loading-text">暂无讨论记录。进入圆桌会议开始第一次讨论吧！</p>';
+            return;
+        }
+
+        elements.historyList.innerHTML = data.discussions.map(d => `
+            <div class="history-card">
+                <div class="history-info" onclick="viewDiscussionMarkdown('${d.id}')">
+                    <div class="history-topic">🌫️ ${escapeHtml(d.topic)}</div>
+                    <div class="history-meta">
+                        <span>🕐 ${d.display_time}</span>
+                        <span>💬 ${d.message_count} 条发言</span>
+                        ${d.has_summary ? '<span>🪞 已总结</span>' : ''}
+                    </div>
+                </div>
+                <div class="history-actions">
+                    <button class="btn btn-small btn-secondary" onclick="viewDiscussionMarkdown('${d.id}')">📝 查看</button>
+                    <button class="btn btn-small btn-primary" onclick="resumeDiscussion('${d.id}')">🔄 回到</button>
+                </div>
+            </div>
+        `).join("");
+    } catch (err) {
+        elements.historyList.innerHTML = `<p class="loading-text">加载失败: ${err.message}</p>`;
+    }
+}
+
+async function viewDiscussionMarkdown(discId) {
+    state.viewingDiscussionId = discId;
+    elements.markdownModal.classList.remove("hidden");
+    elements.markdownContent.innerHTML = '<p class="loading-text">加载中...</p>';
+
+    try {
+        const res = await fetch(`/api/discussion/markdown?id=${encodeURIComponent(discId)}`);
+        const data = await res.json();
+
+        if (data.error) {
+            elements.markdownContent.innerHTML = `<p>错误: ${data.error}</p>`;
+        } else {
+            elements.markdownContent.innerHTML = formatMarkdown(data.content);
+        }
+    } catch (err) {
+        elements.markdownContent.innerHTML = `<p>加载失败: ${err.message}</p>`;
+    }
+}
+
+function closeMarkdownModal() {
+    elements.markdownModal.classList.add("hidden");
+}
+
+async function resumeDiscussion(discId) {
+    closeHistoryModal();
+    closeMarkdownModal();
+
+    try {
+        const res = await fetch(`/api/discussion/load?id=${encodeURIComponent(discId)}`);
+        const data = await res.json();
+
+        if (data.error) {
+            alert("加载讨论失败: " + data.error);
+            return;
+        }
+
+        // Enter meeting room
+        enterMeeting();
+
+        // Clear existing messages
+        elements.meetingMessages.innerHTML = "";
+
+        // Replay messages
+        for (const msg of data.messages) {
+            if (msg.role === "user") {
+                appendMeetingMsg("user", "👤", "你", "", msg.content);
+            } else {
+                appendMeetingMsg("agent", msg.icon, msg.name, "", msg.content);
+            }
+        }
+
+        // Show summary if exists
+        if (data.summary) {
+            appendMeetingMsg("agent", "🪞", "阿罗德斯", "魔镜1-42", data.summary);
+        }
+
+        state.currentDiscussionId = discId;
+    } catch (err) {
+        alert("加载失败: " + err.message);
+    }
+}
+
+function resumeCurrentDiscussion() {
+    if (state.viewingDiscussionId) {
+        resumeDiscussion(state.viewingDiscussionId);
+    }
+}
+
+async function requestSummary(discId) {
+    const btn = document.getElementById("btn-summarize");
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = "🪞 总结中...";
+    }
+
+    // Show Arrodes typing in meeting
+    const arrodes = state.meetingAgents.find(a => a.id === "arrodes");
+    const arrodesIcon = arrodes ? arrodes.meeting_icon : "🪞";
+    const typingId = showMeetingTyping("阿罗德斯");
+
+    // Set Arrodes seat to speaking
+    setSeatState("arrodes", "speaking");
+
+    try {
+        const loadRes = await fetch(`/api/discussion/load?id=${encodeURIComponent(discId)}`);
+        const disc = await loadRes.json();
+
+        const res = await fetch("/api/discussion/summarize", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                id: discId,
+                topic: disc.topic,
+                messages: disc.messages
+            })
+        });
+        const data = await res.json();
+        removeMeetingTyping(typingId);
+
+        if (data.summary) {
+            appendMeetingMsg("agent", arrodesIcon, "阿罗德斯", "魔镜1-42 · 会议总结", data.summary);
+        } else {
+            appendMeetingMsg("agent", "⚠️", "阿罗德斯", "", data.error || "总结失败");
+        }
+    } catch (err) {
+        removeMeetingTyping(typingId);
+        appendMeetingMsg("agent", "⚠️", "阿罗德斯", "", `总结失败: ${err.message}`);
+    }
+
+    setSeatState("arrodes", "done");
+    if (btn) {
+        btn.textContent = "✅ 已总结";
+    }
+    setTimeout(() => setSeatState("arrodes", "idle"), 3000);
 }
 
 // ========================================
