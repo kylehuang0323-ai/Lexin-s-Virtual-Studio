@@ -21,11 +21,30 @@ class BaseAgent:
         self.system_prompt = self._build_system_prompt()
         self.conversation_history = []
 
-        # 初始化 Groq 客户端（OpenAI 兼容）
-        self.client = OpenAI(
-            api_key=config.GROQ_API_KEY,
-            base_url=config.GROQ_BASE_URL,
-        )
+        # 客户端延迟初始化，支持按用户传入 API Key
+        self._client = None
+        self._api_key = None
+
+    def set_api_key(self, api_key: str):
+        """设置用户专属 API Key，重建客户端"""
+        if api_key and api_key != self._api_key:
+            self._api_key = api_key
+            self._client = OpenAI(
+                api_key=api_key,
+                base_url=config.GROQ_BASE_URL,
+            )
+
+    @property
+    def client(self):
+        """获取 OpenAI 客户端，优先使用用户 Key，否则用全局配置"""
+        if self._client:
+            return self._client
+        if not hasattr(self, '_default_client'):
+            self._default_client = OpenAI(
+                api_key=config.GROQ_API_KEY,
+                base_url=config.GROQ_BASE_URL,
+            )
+        return self._default_client
 
     def _build_system_prompt(self) -> str:
         """构建系统提示词，子类可以重写"""

@@ -31,3 +31,6 @@ projects/
 
 # 讨论记录（本地保存）
 discussions/
+
+# 用户数据库
+users.db

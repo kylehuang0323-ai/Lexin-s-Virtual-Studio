@@ -15,6 +15,18 @@
                 <p class="subtitle">AI 团队协作平台</p>
             </div>
 
+            <!-- 用户信息栏 -->
+            <div class="user-bar" id="user-bar">
+                <div class="user-info">
+                    <span class="user-avatar">👤</span>
+                    <span class="user-name" id="user-display-name">加载中...</span>
+                </div>
+                <div class="user-actions">
+                    <button class="btn-icon" id="btn-settings" title="设置 API Key">⚙️</button>
+                    <button class="btn-icon" id="btn-logout" title="退出登录">🚪</button>
+                </div>
+            </div>
+
             <div class="agent-section">
                 <h3>选择团队成员</h3>
                 <div id="agent-list" class="agent-list">
@@ -268,6 +280,32 @@
             <div id="markdown-content" class="markdown-preview"></div>
             <div class="modal-actions">
                 <button id="btn-markdown-close" class="btn btn-secondary">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置弹窗 -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <h2>⚙️ 用户设置</h2>
+            <div class="settings-section">
+                <h3>API Key 配置</h3>
+                <p class="settings-hint">请填入你自己的 <a href="https://console.groq.com/keys" target="_blank" style="color:#818cf8">Groq API Key</a>，每个用户需使用自己的 Key。</p>
+                <div class="settings-current-key">
+                    <span>当前 Key：</span>
+                    <code id="settings-masked-key">未配置</code>
+                </div>
+                <div class="form-group-settings">
+                    <label>Groq API Key</label>
+                    <input type="password" id="settings-apikey" placeholder="gsk_xxxxxxxx..." />
+                </div>
+                <div id="settings-error" class="settings-error" style="display:none"></div>
+                <div id="settings-success" class="settings-success" style="display:none"></div>
+            </div>
+            <div class="modal-actions">
+                <button id="btn-settings-save" class="btn btn-primary">💾 保存</button>
+                <button id="btn-settings-close" class="btn btn-secondary">关闭</button>
             </div>
         </div>
     </div>

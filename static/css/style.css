@@ -1717,3 +1717,182 @@ body {
 .meeting-save-bar .btn-small:hover {
     background: rgba(34, 197, 94, 0.3);
 }
+
+/* ========================================
+   用户栏 & 设置
+   ======================================== */
+
+.user-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    margin: 0 12px 8px;
+    background: rgba(30, 27, 46, 0.8);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+}
+
+.user-avatar {
+    font-size: 1.2rem;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(79, 70, 229, 0.2);
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.user-name {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
+}
+
+.user-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.btn-icon {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background: rgba(79, 70, 229, 0.2);
+    transform: scale(1.1);
+}
+
+/* 设置弹窗内部 */
+.settings-section {
+    margin: 16px 0;
+}
+
+.settings-section h3 {
+    font-size: 0.9rem;
+    color: var(--primary-light);
+    margin-bottom: 8px;
+}
+
+.settings-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+.settings-current-key {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(30, 27, 46, 0.9);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 14px;
+    font-size: 0.82rem;
+}
+
+.settings-current-key span {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.settings-current-key code {
+    color: #a78bfa;
+    font-family: "Fira Code", "Consolas", monospace;
+    font-size: 0.82rem;
+}
+
+.form-group-settings {
+    margin-bottom: 12px;
+}
+
+.form-group-settings label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+}
+
+.form-group-settings input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: rgba(30, 27, 46, 0.8);
+    color: var(--text);
+    font-size: 0.88rem;
+    font-family: "Fira Code", "Consolas", monospace;
+    transition: border-color 0.3s;
+}
+
+.form-group-settings input:focus {
+    outline: none;
+    border-color: var(--primary-light);
+    box-shadow: 0 0 8px rgba(79,70,229,0.15);
+}
+
+.settings-error {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.2);
+    color: #f87171;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    margin-top: 8px;
+}
+
+.settings-success {
+    background: rgba(34,197,94,0.1);
+    border: 1px solid rgba(34,197,94,0.2);
+    color: #4ade80;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    margin-top: 8px;
+}
+
+/* API Key 未配置提示条 */
+.apikey-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: linear-gradient(90deg, rgba(234,179,8,0.1), rgba(234,179,8,0.04));
+    border: 1px solid rgba(234,179,8,0.2);
+    border-radius: 10px;
+    margin: 0 16px 12px;
+    font-size: 0.82rem;
+    color: #eab308;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.apikey-banner:hover {
+    background: linear-gradient(90deg, rgba(234,179,8,0.15), rgba(234,179,8,0.06));
+}

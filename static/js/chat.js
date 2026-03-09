@@ -75,6 +75,17 @@ const elements = {
     markdownContent: document.getElementById("markdown-content"),
     btnMarkdownClose: document.getElementById("btn-markdown-close"),
     btnResumeDiscussion: document.getElementById("btn-resume-discussion"),
+    // 设置 & 用户
+    userDisplayName: document.getElementById("user-display-name"),
+    btnSettings: document.getElementById("btn-settings"),
+    btnLogout: document.getElementById("btn-logout"),
+    settingsModal: document.getElementById("settings-modal"),
+    settingsMaskedKey: document.getElementById("settings-masked-key"),
+    settingsApiKey: document.getElementById("settings-apikey"),
+    settingsError: document.getElementById("settings-error"),
+    settingsSuccess: document.getElementById("settings-success"),
+    btnSettingsSave: document.getElementById("btn-settings-save"),
+    btnSettingsClose: document.getElementById("btn-settings-close"),
 };
 
 // ========================================
@@ -82,9 +93,40 @@ const elements = {
 // ========================================
 
 async function init() {
+    await loadUserInfo();
     await loadAgents();
     await loadMeetingAgents();
     bindEvents();
+}
+
+async function loadUserInfo() {
+    try {
+        const res = await fetch("/api/auth/me");
+        if (res.status === 401) {
+            window.location.href = "/login";
+            return;
+        }
+        const data = await res.json();
+        const user = data.user;
+        state.currentUser = user;
+        elements.userDisplayName.textContent = user.display_name || user.username;
+        if (!user.has_api_key) {
+            showApiKeyBanner();
+        }
+    } catch (err) {
+        console.error("加载用户信息失败:", err);
+    }
+}
+
+function showApiKeyBanner() {
+    const existing = document.querySelector(".apikey-banner");
+    if (existing) return;
+    const banner = document.createElement("div");
+    banner.className = "apikey-banner";
+    banner.innerHTML = "⚠️ 尚未配置 API Key，点击此处前往设置";
+    banner.addEventListener("click", openSettingsModal);
+    const sidebar = document.querySelector(".sidebar-actions");
+    sidebar.parentNode.insertBefore(banner, sidebar);
 }
 
 async function loadAgents() {
@@ -138,6 +180,13 @@ function bindEvents() {
     elements.btnMarkdownClose.addEventListener("click", closeMarkdownModal);
     elements.markdownModal.querySelector(".modal-overlay").addEventListener("click", closeMarkdownModal);
     elements.btnResumeDiscussion.addEventListener("click", resumeCurrentDiscussion);
+
+    // 设置 & 登出
+    elements.btnSettings.addEventListener("click", openSettingsModal);
+    elements.btnLogout.addEventListener("click", handleLogout);
+    elements.btnSettingsSave.addEventListener("click", saveApiKey);
+    elements.btnSettingsClose.addEventListener("click", closeSettingsModal);
+    elements.settingsModal.querySelector(".modal-overlay").addEventListener("click", closeSettingsModal);
 
     elements.userInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter" && !e.shiftKey) {
@@ -1146,6 +1195,83 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// ========================================
+// 用户设置 & 登出
+// ========================================
+
+async function openSettingsModal() {
+    elements.settingsModal.classList.remove("hidden");
+    elements.settingsApiKey.value = "";
+    elements.settingsError.style.display = "none";
+    elements.settingsSuccess.style.display = "none";
+    // 刷新当前 key 状态
+    try {
+        const res = await fetch("/api/auth/me");
+        const data = await res.json();
+        elements.settingsMaskedKey.textContent = data.user.masked_key || "未配置";
+    } catch (e) {
+        elements.settingsMaskedKey.textContent = "获取失败";
+    }
+}
+
+function closeSettingsModal() {
+    elements.settingsModal.classList.add("hidden");
+}
+
+async function saveApiKey() {
+    const apiKey = elements.settingsApiKey.value.trim();
+    if (!apiKey) {
+        elements.settingsError.textContent = "请输入 API Key";
+        elements.settingsError.style.display = "block";
+        elements.settingsSuccess.style.display = "none";
+        return;
+    }
+    try {
+        const res = await fetch("/api/auth/apikey", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ api_key: apiKey, provider: "groq" })
+        });
+        const data = await res.json();
+        if (data.ok) {
+            elements.settingsMaskedKey.textContent = data.masked_key;
+            elements.settingsSuccess.textContent = "✅ API Key 保存成功！";
+            elements.settingsSuccess.style.display = "block";
+            elements.settingsError.style.display = "none";
+            elements.settingsApiKey.value = "";
+            // 移除未配置横幅
+            const banner = document.querySelector(".apikey-banner");
+            if (banner) banner.remove();
+        } else {
+            elements.settingsError.textContent = data.error || "保存失败";
+            elements.settingsError.style.display = "block";
+            elements.settingsSuccess.style.display = "none";
+        }
+    } catch (err) {
+        elements.settingsError.textContent = "网络错误: " + err.message;
+        elements.settingsError.style.display = "block";
+        elements.settingsSuccess.style.display = "none";
+    }
+}
+
+async function handleLogout() {
+    if (!confirm("确定要退出登录吗？")) return;
+    try {
+        await fetch("/api/auth/logout", { method: "POST" });
+    } catch (e) {}
+    window.location.href = "/login";
+}
+
+// 全局 fetch 拦截：如果返回 401 自动跳转到登录
+const _origFetch = window.fetch;
+window.fetch = async function(...args) {
+    const res = await _origFetch.apply(this, args);
+    if (res.status === 401 && !args[0].toString().includes("/api/auth/")) {
+        window.location.href = "/login";
+    }
+    return res;
+};
 
 // 启动
 init();

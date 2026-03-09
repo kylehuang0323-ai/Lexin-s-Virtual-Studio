@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏢 虚拟工作室 - 登录</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #4f46e5; --primary-light: #818cf8;
+            --bg: #0d0a18; --card-bg: #1a1728;
+            --border: #2d2a3e; --text: #f0eef6; --text-muted: #6b6880;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            background-image:
+                radial-gradient(ellipse at 30% 20%, rgba(88,28,135,0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 70%, rgba(30,64,175,0.08) 0%, transparent 40%);
+        }
+        .login-container {
+            width: 100%; max-width: 420px; padding: 20px;
+        }
+        .login-header {
+            text-align: center; margin-bottom: 36px;
+        }
+        .login-header .logo { font-size: 3rem; margin-bottom: 12px; }
+        .login-header h1 { font-size: 1.6rem; letter-spacing: 2px; color: #e0d4ff; }
+        .login-header p { color: var(--text-muted); font-size: 0.85rem; margin-top: 6px; }
+
+        .login-card {
+            background: var(--card-bg); border: 1px solid var(--border);
+            border-radius: 16px; padding: 32px; backdrop-filter: blur(12px);
+        }
+        .tabs {
+            display: flex; gap: 4px; margin-bottom: 24px;
+            background: rgba(30,27,46,0.8); border-radius: 10px; padding: 4px;
+        }
+        .tab {
+            flex: 1; padding: 10px; text-align: center; cursor: pointer;
+            border-radius: 8px; font-size: 0.9rem; color: var(--text-muted);
+            transition: all 0.3s; border: none; background: none;
+        }
+        .tab.active {
+            background: var(--primary); color: white; font-weight: 600;
+        }
+        .form-group { margin-bottom: 18px; }
+        .form-group label {
+            display: block; font-size: 0.8rem; color: var(--text-muted);
+            margin-bottom: 6px; letter-spacing: 0.5px;
+        }
+        .form-group input {
+            width: 100%; padding: 11px 14px; border-radius: 10px;
+            border: 1px solid var(--border); background: rgba(30,27,46,0.8);
+            color: var(--text); font-size: 0.9rem; font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus {
+            outline: none; border-color: var(--primary-light);
+            box-shadow: 0 0 12px rgba(79,70,229,0.15);
+        }
+        .btn-submit {
+            width: 100%; padding: 12px; border-radius: 10px;
+            border: none; background: var(--primary); color: white;
+            font-size: 0.95rem; font-weight: 600; cursor: pointer;
+            transition: all 0.3s; margin-top: 6px;
+        }
+        .btn-submit:hover { background: #4338ca; transform: translateY(-1px); }
+        .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .error-msg {
+            background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
+            color: #f87171; padding: 10px 14px; border-radius: 8px;
+            font-size: 0.85rem; margin-bottom: 16px; display: none;
+        }
+        .login-footer {
+            text-align: center; margin-top: 20px; color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="logo">🏢</div>
+            <h1>虚拟工作室</h1>
+            <p>AI 团队协作平台 · 多用户版</p>
+        </div>
+
+        <div class="login-card">
+            <div class="tabs">
+                <button class="tab active" id="tab-login" onclick="switchTab('login')">登录</button>
+                <button class="tab" id="tab-register" onclick="switchTab('register')">注册</button>
+            </div>
+
+            <div id="error-box" class="error-msg"></div>
+
+            <!-- 登录表单 -->
+            <form id="form-login" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" id="login-username" placeholder="请输入用户名" required autocomplete="username" />
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="login-password" placeholder="请输入密码" required autocomplete="current-password" />
+                </div>
+                <button type="submit" class="btn-submit" id="btn-login">登 录</button>
+            </form>
+
+            <!-- 注册表单 -->
+            <form id="form-register" style="display:none" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" id="reg-username" placeholder="2个字符以上" required />
+                </div>
+                <div class="form-group">
+                    <label>显示名称</label>
+                    <input type="text" id="reg-displayname" placeholder="同事看到的名字（可选）" />
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="reg-password" placeholder="4个字符以上" required />
+                </div>
+                <button type="submit" class="btn-submit" id="btn-register">注 册</button>
+            </form>
+        </div>
+
+        <div class="login-footer">
+            登录后请在「设置」中配置你自己的 Groq API Key
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            document.getElementById("form-login").style.display = tab === "login" ? "block" : "none";
+            document.getElementById("form-register").style.display = tab === "register" ? "block" : "none";
+            document.getElementById("tab-login").classList.toggle("active", tab === "login");
+            document.getElementById("tab-register").classList.toggle("active", tab === "register");
+            hideError();
+        }
+
+        function showError(msg) {
+            const box = document.getElementById("error-box");
+            box.textContent = msg; box.style.display = "block";
+        }
+        function hideError() {
+            document.getElementById("error-box").style.display = "none";
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault(); hideError();
+            const btn = document.getElementById("btn-login");
+            btn.disabled = true; btn.textContent = "登录中...";
+            try {
+                const res = await fetch("/api/auth/login", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({
+                        username: document.getElementById("login-username").value.trim(),
+                        password: document.getElementById("login-password").value,
+                    })
+                });
+                const data = await res.json();
+                if (data.ok) { window.location.href = "/"; }
+                else { showError(data.error || "登录失败"); }
+            } catch (err) { showError("网络错误: " + err.message); }
+            btn.disabled = false; btn.textContent = "登 录";
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault(); hideError();
+            const btn = document.getElementById("btn-register");
+            btn.disabled = true; btn.textContent = "注册中...";
+            try {
+                const res = await fetch("/api/auth/register", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({
+                        username: document.getElementById("reg-username").value.trim(),
+                        password: document.getElementById("reg-password").value,
+                        display_name: document.getElementById("reg-displayname").value.trim(),
+                    })
+                });
+                const data = await res.json();
+                if (data.ok) { window.location.href = "/"; }
+                else { showError(data.error || "注册失败"); }
+            } catch (err) { showError("网络错误: " + err.message); }
+            btn.disabled = false; btn.textContent = "注 册";
+        }
+    </script>
+</body>
+</html>
