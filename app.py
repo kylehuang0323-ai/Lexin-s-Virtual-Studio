@@ -1,5 +1,5 @@
 """
-虚拟工作室 - 主应用
+My Studio - 主应用
 一个基于多 AI Agent 协作的 Web 应用（支持多用户）
 """
 from functools import wraps
@@ -403,7 +403,7 @@ def summarize_discussion():
 
 
 if __name__ == "__main__":
-    print("🏢 虚拟工作室启动中...")
+    print("🏢 My Studio 启动中...")
     print("📋 需求分析师 | 🏗️ 架构设计师 | 🎨 UI设计师")
     print("🧩 UX设计师   | 💻 代码工程师 | 🧪 测试工程师")
     print("🪞 记录官·阿罗德斯")

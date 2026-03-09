@@ -17,7 +17,7 @@ class RequirementAnalyst(BaseAgent):
         super().__init__()
 
     def _build_system_prompt(self) -> str:
-        return f"""你是虚拟工作室中的{self.name} {self.icon}。
+        return f"""你是 My Studio 中的{self.name} {self.icon}。
 {self.role_description}
 
 你的工作方式：

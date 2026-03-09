@@ -48,7 +48,7 @@ class BaseAgent:
 
     def _build_system_prompt(self) -> str:
         """构建系统提示词，子类可以重写"""
-        return f"""你是一位专业的{self.name}，在一个虚拟工作室中工作。
+        return f"""你是一位专业的{self.name}，在 My Studio 中工作。
 {self.role_description}
 
 工作准则：
