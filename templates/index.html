@@ -23,8 +23,11 @@
             </div>
 
             <div class="sidebar-actions">
-                <button id="btn-ask-all" class="btn btn-primary" title="向所有团队成员征求意见">
-                    🗣️ 全员讨论
+                <button id="btn-ask-all" class="btn btn-primary" title="进入灰雾之上圆桌会议">
+                    🌫️ 圆桌会议
+                </button>
+                <button id="btn-history" class="btn btn-secondary" title="查看历史讨论记录">
+                    📜 讨论记录
                 </button>
                 <button id="btn-generate" class="btn btn-accent" title="让代码工程师生成完整项目">
                     📦 生成项目
@@ -145,6 +148,130 @@
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+    <!-- 诡秘之主主题 · 灰雾之上会议室 -->
+    <div id="meeting-room" class="meeting-room hidden">
+        <!-- 多层动态背景 -->
+        <div class="meeting-bg">
+            <div class="nebula-layer"></div>
+            <div class="stars-layer"></div>
+        </div>
+        <canvas id="particles-canvas" class="particles-canvas"></canvas>
+
+        <!-- 会议室顶部 -->
+        <div class="meeting-header">
+            <div class="meeting-header-left">
+                <div class="meeting-logo-wrap">
+                    <span class="meeting-logo">🌫️</span>
+                    <div class="logo-ring"></div>
+                </div>
+                <div>
+                    <h2 class="meeting-title">灰雾之上 · 圆桌会议</h2>
+                    <p class="meeting-subtitle">诡秘之主 × 虚拟工作室</p>
+                </div>
+            </div>
+            <div class="meeting-header-right">
+                <div class="meeting-status" id="meeting-status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">等待议题</span>
+                </div>
+                <button id="btn-leave-meeting" class="btn-leave" title="离开会议">
+                    <span class="leave-icon">✕</span> 离开会议
+                </button>
+            </div>
+        </div>
+
+        <!-- 主内容区: 圆桌 + 聊天 -->
+        <div class="meeting-body">
+            <!-- 左侧: 诡秘圆桌 -->
+            <div class="meeting-table-area">
+                <!-- 中央圆桌 -->
+                <div class="round-table-scene">
+                    <div class="table-outer-ring"></div>
+                    <div class="table-inner-ring"></div>
+                    <div class="table-core">
+                        <div class="table-symbol">🌫️</div>
+                        <div class="table-pulse"></div>
+                    </div>
+                    <div class="table-runes" id="table-runes"></div>
+                </div>
+                <!-- 环形座席 -->
+                <div class="seats-orbit" id="meeting-participants">
+                    <!-- 由 JS 动态生成 -->
+                </div>
+            </div>
+
+            <!-- 右侧: 聊天区域 -->
+            <div class="meeting-chat-area">
+                <div id="meeting-messages" class="meeting-messages">
+                    <div class="meeting-welcome">
+                        <div class="welcome-glyph">
+                            <span class="glyph-main">🌫️</span>
+                            <div class="glyph-rings">
+                                <div class="glyph-ring r1"></div>
+                                <div class="glyph-ring r2"></div>
+                                <div class="glyph-ring r3"></div>
+                            </div>
+                        </div>
+                        <h3 class="welcome-title">灰雾弥漫，长桌显现</h3>
+                        <p class="welcome-desc">七位非凡者已就座，等待您的议题</p>
+                        <div class="welcome-divider">
+                            <span></span><span class="divider-gem">◆</span><span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="meeting-input-area">
+                    <div class="meeting-input-container">
+                        <div class="input-glow"></div>
+                        <textarea
+                            id="meeting-input"
+                            placeholder="在灰雾之上提出你的议题..."
+                            rows="2"
+                        ></textarea>
+                        <button id="btn-meeting-send" class="btn-meeting-send" title="发送">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M22 2L11 13"/>
+                                <path d="M22 2L15 22L11 13L2 9L22 2Z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 讨论记录弹窗 -->
+    <div id="history-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content modal-wide">
+            <h2>📜 讨论记录</h2>
+            <p class="modal-desc">灰雾之上的每次圆桌会议都被阿罗德斯忠实记录</p>
+            <div id="history-list" class="history-list">
+                <p class="loading-text">加载中...</p>
+            </div>
+            <div class="modal-actions">
+                <button id="btn-history-close" class="btn btn-secondary">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Markdown 查看弹窗 -->
+    <div id="markdown-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content modal-wide">
+            <div class="markdown-modal-header">
+                <h2 id="markdown-modal-title">📝 会议纪要</h2>
+                <div class="markdown-modal-actions">
+                    <button id="btn-resume-discussion" class="btn btn-primary btn-small">🔄 回到此讨论</button>
+                </div>
+            </div>
+            <div id="markdown-content" class="markdown-preview"></div>
+            <div class="modal-actions">
+                <button id="btn-markdown-close" class="btn btn-secondary">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script></script>
 </body>
 </html>

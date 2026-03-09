@@ -1,4 +1,5 @@
 from agents.base_agent import BaseAgent
+import config
 
 
 class Developer(BaseAgent):
@@ -100,16 +101,17 @@ flask>=3.0.0
 
             full_prompt = context + prompt if context else prompt
 
-            response = self.client.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=full_prompt,
-                config={
-                    "system_instruction": prompt,
-                    "max_output_tokens": 65536,
-                }
+            # 调用 DeepSeek API 生成项目
+            response = self.client.chat.completions.create(
+                model=config.AI_MODEL,
+                messages=[
+                    {"role": "system", "content": prompt},
+                    {"role": "user", "content": full_prompt},
+                ],
+                max_tokens=8192,
             )
 
-            result = response.text
+            result = response.choices[0].message.content
 
             # 保存到对话历史
             self.conversation_history.append({
