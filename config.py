@@ -3,11 +3,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Google Gemini API 配置
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "在这里填入你的 Gemini API Key")
+# Groq API 配置
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "YOUR_GROQ_API_KEY_HERE")
+GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 
-# Gemini 模型名称
-GEMINI_MODEL = "gemini-2.0-flash"
+# AI 模型名称
+AI_MODEL = "llama-3.3-70b-versatile"
 
 # Flask 配置
 SECRET_KEY = os.getenv("SECRET_KEY", "virtual-studio-secret-key")
