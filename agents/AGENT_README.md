@@ -1,3 +1,16 @@
+agent/requirement-analyst
+# 📋 需求分析师 Agent
+
+## 角色职责
+- 理解和提炼用户的核心需求
+- 将模糊的想法转化为清晰的需求文档
+- 识别功能性需求和非功能性需求
+- 分析需求的优先级和可行性
+- 编写用户故事（User Story）和验收标准
+
+## 相关文件
+- `agents/requirement_analyst.py` - 需求分析师 Agent 实现
+
 agent/ui-designer
 # 🎨 UI设计师 Agent
 
@@ -29,14 +42,19 @@ agent/ui-designer
 ## 相关文件
 - `agents/developer.py` - 代码工程师 Agent 实现（含 generate_project）
 main
+main
 - `agents/base_agent.py` - Agent 基类
 - `file_manager.py` - 文件管理器（解析、创建、读取文件）
 
 ## 开发说明
+agent/requirement-analyst
+修改此角色的行为，请编辑 `agents/requirement_analyst.py` 中的：
+
 agent/ui-designer
 修改此角色的行为，请编辑 `agents/ui_designer.py` 中的：
 
 修改此角色的行为，请编辑 `agents/developer.py` 中的：
+main
 main
 - `role_description` - 角色描述
 - `_build_system_prompt()` - 聊天系统提示词
