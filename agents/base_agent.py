@@ -1,8 +1,8 @@
 """
 BaseAgent - 所有 AI Agent 的基类
-封装了 Google Gemini API (google-genai SDK) 的调用逻辑
+封装了 DeepSeek API (OpenAI 兼容接口) 的调用逻辑
 """
-from google import genai
+from openai import OpenAI
 import config
 
 
@@ -21,8 +21,11 @@ class BaseAgent:
         self.system_prompt = self._build_system_prompt()
         self.conversation_history = []
 
-        # 初始化 Gemini 客户端
-        self.client = genai.Client(api_key=config.GEMINI_API_KEY)
+        # 初始化 Groq 客户端（OpenAI 兼容）
+        self.client = OpenAI(
+            api_key=config.GROQ_API_KEY,
+            base_url=config.GROQ_BASE_URL,
+        )
 
     def _build_system_prompt(self) -> str:
         """构建系统提示词，子类可以重写"""
@@ -40,19 +43,23 @@ class BaseAgent:
     def chat(self, user_message: str) -> str:
         """与 Agent 对话"""
         try:
-            # 构建带有对话历史的消息
-            messages = self._build_messages(user_message)
+            # 构建 OpenAI 格式的消息列表
+            messages = [{"role": "system", "content": self.system_prompt}]
 
-            # 调用 Gemini API
-            response = self.client.models.generate_content(
-                model=config.GEMINI_MODEL,
-                contents=messages,
-                config={
-                    "system_instruction": self.system_prompt,
-                }
+            # 添加对话历史（最近10轮）
+            for msg in self.conversation_history[-10:]:
+                messages.append({"role": msg["role"], "content": msg["content"]})
+
+            # 添加当前用户消息
+            messages.append({"role": "user", "content": user_message})
+
+            # 调用 DeepSeek API
+            response = self.client.chat.completions.create(
+                model=config.AI_MODEL,
+                messages=messages,
             )
 
-            assistant_reply = response.text
+            assistant_reply = response.choices[0].message.content
 
             # 保存对话历史
             self.conversation_history.append({
@@ -69,19 +76,6 @@ class BaseAgent:
         except Exception as e:
             error_msg = f"调用 AI 时出错: {str(e)}"
             return error_msg
-
-    def _build_messages(self, user_message: str) -> str:
-        """构建发送给模型的完整消息"""
-        full_message = ""
-
-        if self.conversation_history:
-            full_message += "[历史对话]\n"
-            for msg in self.conversation_history[-10:]:  # 保留最近10轮
-                role_label = "用户" if msg["role"] == "user" else self.name
-                full_message += f"{role_label}: {msg['content']}\n\n"
-
-        full_message += f"[当前用户输入]\n{user_message}"
-        return full_message
 
     def clear_history(self):
         """清除对话历史"""

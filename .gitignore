@@ -28,3 +28,6 @@ Thumbs.db
 
 # 项目生成的输出目录
 projects/
+
+# 讨论记录（本地保存）
+discussions/
