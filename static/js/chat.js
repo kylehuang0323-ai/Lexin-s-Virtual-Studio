@@ -4,6 +4,7 @@
 
 // 角色专属色彩系统
 const CHARACTER_COLORS = {
+    product_manager:     "#c084fc",  // Violet (Audrey)
     requirement_analyst: "#eab308",  // Gold
     architect:           "#a78bfa",  // Purple
     ui_designer:         "#f472b6",  // Rose

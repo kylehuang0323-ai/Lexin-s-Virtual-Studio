@@ -404,9 +404,9 @@ def summarize_discussion():
 
 if __name__ == "__main__":
     print("🏢 My Studio 启动中...")
-    print("📋 需求分析师 | 🏗️ 架构设计师 | 🎨 UI设计师")
-    print("🧩 UX设计师   | 💻 代码工程师 | 🧪 测试工程师")
-    print("🪞 记录官·阿罗德斯")
+    print("🎯 产品经理   | 📋 需求分析师 | 🏗️ 架构设计师")
+    print("🎨 UI设计师   | 🧩 UX设计师   | 💻 代码工程师")
+    print("🧪 测试工程师 | 🪞 记录官·阿罗德斯")
     print(f"🌐 访问地址: http://localhost:5000")
     print("-" * 50)
     app.run(debug=config.DEBUG, host="0.0.0.0", port=5000)
